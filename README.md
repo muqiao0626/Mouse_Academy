@@ -20,7 +20,6 @@ Servo.h
 
 Compile the code in ARDUINO (IDE) 1.8.5 and upload it to Arduino Mega 2560
 
-...
 
 2. Software
 
@@ -35,6 +34,10 @@ First, run Initialization.m to initialize the program. Then, run Master.m. The p
 3. Design files
 
 The folder contains several CAD files for the hardware
+
+## Licence
+
+These files are freely available under the terms of General Public License v3.0 (enclosed with this repository)
 
 ## Contact
 
