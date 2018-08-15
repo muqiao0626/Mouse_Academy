@@ -16,7 +16,7 @@ The code was written in Arduino language (C) which has been tested on ARDUINO (I
 Servo.h
 ```
 
-### Instruction in compile and upload the code
+### Instruction in compiling and uploading the code
 
 Compile the code in ARDUINO (IDE) 1.8.5 and upload it to Arduino Mega 2560
 
@@ -27,7 +27,7 @@ Compile the code in ARDUINO (IDE) 1.8.5 and upload it to Arduino Mega 2560
 
 The code was written in Matlab and has been tested under Matlab R2016a. To run the code, copy all the files under /Software/Matlab_PC/ into the MATLAB folder. Modify the ProtocolFiles.xlsx to include all the training procedures. The format of the excel file is: Procedure_name, Threshold_for_downgrade, Threshold_for_upgrade, Trials_in_a_session.
 
-### Instruction in run the code
+### Instruction in running the code
 
 First, run Initialization.m to initialize the program. Then, run Master.m. The program runs in an infinite loop. To exit running, pause the program and then stop the Master.m program.
 
