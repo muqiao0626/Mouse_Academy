@@ -26,8 +26,8 @@ catch err
     error('Make sure you select the correct COM Port where the Arduino is connected.');
 end
 
-masterpath = 'C:\Users\MQ_behaivorbox\Documents\MATLAB\';
-videopath = 'G:\MouseAcademy1_201807\';
+masterpath = 'C:\Users\MQ_behaivorbox\Documents\MATLAB\'; % Master file path
+videopath = 'G:\MouseAcademy1_201807\'; % Video file path
 videowindow = [0 10 800 640];
 formatOut = 'yyyymmddTHHMMSS';
 filename = datestr(now,formatOut);
@@ -61,7 +61,7 @@ while (1)
     
     for k = 1:6
         if (Boredness(k) > 0)
-            if (etime (c, BorednessTimer(k,:))/3600 > 12)
+            if (etime (c, BorednessTimer(k,:))/3600 > 0) % the hours (replace 0 with your number) the animal is banned from entering the training box if not finishing a session
                 Boredness(k) = Boredness(k) - 1;
                 BorednessTimer(k,:) = c;
             end

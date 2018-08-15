@@ -25,7 +25,7 @@ Compile the code in ARDUINO (IDE) 1.8.5 and upload it to Arduino Mega 2560
 
 ### Documentation
 
-The code was written in Matlab and has been tested under Matlab R2016a. To run the code, copy .m files into the MATLAB folder. Add the Bpod folder into your matlab path and modify the ProtocolFiles.xlsx to include all the training procedures.
+The code was written in Matlab and has been tested under Matlab R2016a. To run the code, copy all the files under /Software/Matlab_PC/ into the MATLAB folder. Modify the ProtocolFiles.xlsx to include all the training procedures. The format of the excel file is: Procedure_name, Threshold_for_downgrade, Threshold_for_upgrade, Trials_in_a_session.
 
 ### Instruction in run the code
 

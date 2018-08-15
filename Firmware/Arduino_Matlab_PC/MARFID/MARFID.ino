@@ -288,7 +288,7 @@ void loop() {
       if (in == true) {
         if (flag[2] == 1 && flag[1] == 1) {
           if (tags3[count[2]] == tags2[count[1]]) {
-            lockServo2.write(160); [
+            lockServo2.write(160); 
             pass2 = 1;
           }
         }
@@ -327,7 +327,7 @@ void loop() {
 
   else {
 
-    lockServo2.write(20);  [
+    lockServo2.write(20);  
     
     static int pass1 = 0;
     static int pass2 = 0;
@@ -417,9 +417,9 @@ void loop() {
       if (out == true) {
         if (flag[2] == 1 && flag[1] == 1) {
           if (tags3[count[2]] == tags2[count[1]]) {
-            lockServo2.write(160);  [
+            lockServo2.write(160);  
             delay(1000);
-            lockServo1.write(20);  [
+            lockServo1.write(20);  
             pass2 = 1;
           }
         }
