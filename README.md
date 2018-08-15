@@ -7,7 +7,7 @@ specific task using water rewards, and a video recording of the mouse’s behavi
 
 ## Content
 
-1. Firmware: Arduino program for RFID access control
+## 1. Firmware: Arduino program for RFID access control
 
 ### Documentation
 
@@ -21,7 +21,7 @@ Servo.h
 Compile the code in ARDUINO (IDE) 1.8.5 and upload it to Arduino Mega 2560
 
 
-2. Software
+## 2. Software
 
 ### Documentation
 
@@ -31,7 +31,7 @@ The code was written in Matlab and has been tested under Matlab R2016a. To run t
 
 First, run Initialization.m to initialize the program. Then, run Master.m. The program runs in an infinite loop. To exit running, pause the program and then stop the Master.m program.
 
-3. Design files
+## 3. Design files
 
 The folder contains several CAD files for the hardware
 
