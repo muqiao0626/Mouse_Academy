@@ -20,9 +20,16 @@ import traceback
 from serial.tools.list_ports_linux import comports
 sys.path.append('/home/pi/Mouse_Academy/Software/Python_RasPi')
 from Modules import BpodClass, StateMachineAssembler
+import BpodUtils
 import report_card as rc
 import json
 
+######################################################################
+#
+# Use to run protocol from command line
+# e.g. ~$ python ProtocolTemplate/ProtocolTemplate.py 'Dummy Subject'
+#
+######################################################################
 def main(argv):
     parser = argparse.ArgumentParser(description='Parse subject argument,')
     parser.add_argument('subject', metavar='S', type=str, nargs=1,
@@ -32,10 +39,9 @@ def main(argv):
     mouse = rc.ReportCard(sub)
     mouse.load()
     
-    bpodPort = BpodUtils.findBpodPort()
-                bpodPort = portName
-                myBpod, reportCard = runProtocol(bpodPort, mouse)
-                return myBpod, reportCard
+    bpodPort = BpodUtils.findBpodUSBPort()
+    myBpod, reportCard = runProtocol(bpodPort, mouse)
+    return myBpod, reportCard
                 
 def runProtocol(bpodPort, reportCard):
     # Initializing Bpod
@@ -102,7 +108,7 @@ def runProtocol(bpodPort, reportCard):
         trialTypes = trialTypes + [trialType]
         print('Trial %d, %s' % (currentTrial, trialType))
         
-        if trialType == 'HighLeft':
+        if trialType == 'Left':
             leftCorrect = 'RewardLeft'
             rightCorrect = 'Timeout'
             displayLED = 'PWM1'
@@ -146,37 +152,20 @@ def runProtocol(bpodPort, reportCard):
         rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, rewardState)
         rewarded = rewardTimes[0][0]>0
         
-        #waterRewarded does not include click rewards
-        if numConsecutiveCorrect == streak-1:
-            waterReward = rewarded
-        else:
-            waterReward = 0
-        print('correct:', rewarded)    
-        print('waterReward:',waterReward)
-        
         #if correct and water rewarded, update water and reset streak
-        if waterReward:
+        if rewarded:
             sessionWater += 0.001*rewardAmount
             if centerRewarded>0:
                 sessionWater += 0.001*centerRewarded
             numConsecutiveCorrect = 0
 
-        if rewarded:
-            numConsecutiveCorrect += 1
-            if trialType == 'HighLeft':
-                leftPerf += 1
-            elif trialType == 'LowRight':
-                rightPerf += 1
-            fractionLeftCorrect = leftPerf/(leftPerf+rightPerf)
-        else:
-            numConsecutiveCorrect = 0    
-        
         elapsed_time = time.time()-startTime
         currentTrial = currentTrial+1
         
         if sessionWater+waterToday >= maxWater:
             print('reached maxWater (%d)' % maxWater)
             break
+            
     print('Session water:', sessionWater)
     myBpod.updateSettings({'Trial Types':trialTypes})
     myBpod.saveSessionData()
@@ -184,7 +173,6 @@ def runProtocol(bpodPort, reportCard):
     reportCard.save()
     # Disconnect Bpod
     myBpod.disconnect() # Sends a termination byte and closes the serial port. PulsePal stores current params to its EEPROM.
-    sc.close()
     return myBpod, reportCard
 
 if __name__ == "__main__":
