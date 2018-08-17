@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os, sys
 import inspect
-sys.path.append("/home/pi/mouse-academy-pi/Bpod_Gen2/Python_3/Modules")
+import BpodUtils
 import struct
 import math
 import time
@@ -29,12 +29,6 @@ import json
 import shutil
 import datetime
 import importlib
-
-def json_serial(obj):
-    import datetime as dt
-    if isinstance(obj, (dt.datetime, dt.date)):
-        return obj.isoformat()
-    raise TypeError ("Type %s not serializable" % type(obj))
 
 class BpodObject(object):
     def __init__(self, serialPortName):
@@ -59,16 +53,15 @@ class BpodObject(object):
         self.stateMachineInfo.inputChannelNames = ()
         self.stateMachineInfo.nOutputChannels = 0
         self.stateMachineInfo.outputChannelNames = ()
-        self.calibrationFileFolder = '/home/pi/mouse-academy-pi/Bpod_Gen2/Python_3/Data/Calibration'
-        self.subject = 'Dummy Subject'
+        self.calibrationFileFolder = BpodUtils.getCalibrationDir()
+        self.subject = 'DummySubject'
         self.protocol = ''
         self.protocolFolder = ''
         self.date = datetime.date.today().strftime("%b%d_%y")
-        self.dataFolder = '/home/pi/mouse-academy-pi/Bpod_Gen2/Python_3/Data'
+        self.dataFolder = BpodUtils.getDataDir()
         if not os.path.exists(self.dataFolder):
             os.mkdir(self.dataFolder)
-        self.remoteDataFolder = "C:\Bpod_Gen2\Python 3\Data"
-        #self.remoteCurrentDataFolder = slash.join([self.remoteDataFolder, self.subject, self.protocol, "Session Data"])
+        self.remoteDataFolder = "C:\Data"
         self.currentDataFolder = os.path.join(self.dataFolder, self.subject, self.protocol, 'Session Data')
         self.session = 1
         self.currentDataFile = '%s_%s_%s_Session%d.json' % (self.subject, self.protocol, self.date, self.session)
@@ -120,10 +113,15 @@ class BpodObject(object):
         try:
             softCodeHandlerStr = "SoftCodeHandler_" + self.protocol
             self.softCodeMod = importlib.import_module(softCodeHandlerStr, package=None)
-            self.softCodeHandler = self.softCodeMod.SoftCodeHandler()
         except:
             self.disconnect()
             raise ImportError("SoftCodeHandler_%s.py not found." % self.protocol)
+        
+        try:
+            self.softCodeHandler = self.softCodeMod.SoftCodeHandler()
+        except ImportError as e:
+            raise BpodError(e)
+        
     def structToDict(self, st):
         import BpodClass
         d = st.__dict__
@@ -150,7 +148,7 @@ class BpodObject(object):
         dataDict = self.structToDict(self.data)
         dataDict.update({'Settings':self.settings})
         with open(fullPath, 'a+') as f:
-            f.write(json.dumps(dataDict, sort_keys=True, indent=2, separators=(',', ': '), default=json_serial))
+            f.write(json.dumps(dataDict, sort_keys=True, indent=2, separators=(',', ': '), default=BpodUtils.json_serial))
             f.write('\n')
         return fullPath
     

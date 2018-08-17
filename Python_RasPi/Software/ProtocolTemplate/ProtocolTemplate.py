@@ -18,7 +18,6 @@ import os, sys
 import argparse
 import traceback
 from serial.tools.list_ports_linux import comports
-sys.path.append('/home/pi/Mouse_Academy/Software/Python_RasPi')
 from Modules import BpodClass, StateMachineAssembler, BpodUtils
 import report_card as rc
 import json

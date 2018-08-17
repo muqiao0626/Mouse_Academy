@@ -18,6 +18,32 @@ import argparse
 import traceback
 from serial.tools.list_ports_linux import comports
 
+#find directories
+def getModulesDir():
+    modulesDir = os.path.dirname(os.path.realpath(__file__))
+    return modulesDir
+
+def getSoftwareDir():
+    softwareDir = os.path.dirname(getModulesDir())
+    return softwareDir
+
+def getRasPiDir():
+    rasPiDir = os.path.dirname(getSoftwareDir())
+    return rasPiDir
+
+def getDataDir():
+    softwareDir = getSoftwareDir()
+    dataDir = os.path.join(softwareDir, 'Data')
+    return dataDir
+
+def getCalibrationDir():
+    calibrationDir = os.path.join(getSoftwareDir(), 'Calibration')
+    return calibrationDir
+
+def getReportCardDir():
+    reportCardDir = os.path.join(getDataDir(), 'ReportCards')
+    return reportCardDir
+
 def getDevices():
     iterator = sorted(comports())
     devices = {}

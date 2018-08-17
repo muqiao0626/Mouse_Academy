@@ -19,10 +19,10 @@ import os, sys
 import argparse
 import json
 import numpy as np
-sys.path.append("/home/pi/mouse-academy-pi")
-from Bpod_Gen2.Python_3.Modules.BpodClass import BpodObject
-from Bpod_Gen2.Python_3.Modules.StateMachineAssembler import stateMachine
-import run_MARFID as rm
+from BpodClass import BpodObject
+from StateMachineAssembler import stateMachine
+import BpodUtils
+
 def addPoint(valveNum, pulseTime, numPulses):
     if numPulses > 200:
         print('Max number of pulses is 200; changing numPulses to 200.')
@@ -34,8 +34,7 @@ def addPoint(valveNum, pulseTime, numPulses):
     valveTime = pulseTime/1000
     valveBin = 2**(valveNum-1)
     # Find name of port
-    devices, megaSer = rm.getDevicesDict()
-    portName = devices['Arduino Due']
+    portName = BpodUtils.getDevices()
     myBpod = BpodObject(portName)
     calFolder = myBpod.calibrationFileFolder
     calFile = "valve_calibration_%d.json" % valveNum
