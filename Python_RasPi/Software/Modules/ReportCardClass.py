@@ -135,10 +135,5 @@ class ReportCard():
                             'trainingAllowed': self.trainingAllowed
                             })
         with open(self.reportCardFile, 'w') as f:
-            jsonStr = json.dumps(self.report, sort_keys=True, indent=4, separators=(',', ': '), default=BpodClass.json_serial)
+            jsonStr = json.dumps(self.report, sort_keys=True, indent=4, separators=(',', ': '), default=BpodUtils.json_serial)
             f.write(jsonStr)
-            
-        
-
-if __name__ == '__main__':
-    main()

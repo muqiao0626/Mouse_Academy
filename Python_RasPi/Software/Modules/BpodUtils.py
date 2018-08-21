@@ -20,6 +20,12 @@ import serial
 import time
 from serial.tools.list_ports_linux import comports
 
+def json_serial(obj):
+    import datetime as dt
+    if isinstance(obj, (dt.datetime, dt.date)):
+        return obj.isoformat()
+    raise TypeError ("Type %s not serializable" % type(obj))
+    
 #find directories
 def getModulesDir():
     modulesDir = os.path.dirname(os.path.realpath(__file__))
@@ -39,7 +45,7 @@ def getDataDir():
     return dataDir
 
 def getCalibrationDir():
-    calibrationDir = os.path.join(getSoftwareDir(), 'Calibration')
+    calibrationDir = os.path.join(getSoftwareDir(), 'Calibrate')
     return calibrationDir
 
 def getReportCardDir():

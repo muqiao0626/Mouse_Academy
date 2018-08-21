@@ -48,12 +48,38 @@ def testBpodUtils():
     return True
 
 def testReportCard():
-    return None
+    from ReportCardClass import ReportCard
+    ds = ReportCard('DummySubject')
+    ds.setCurrentProtocol('ProtocolTemplate')
+    ds.save()
+    
+    return ds
 
 def testBpodClass():
+    import BpodUtils
+    from BpodClass import BpodObject
+    bpodPort = BpodUtils.findBpodUSBPort()
+    myBpod = BpodObject(bpodPort)
+    myBpod.set_subject('DummySubject')
+    myBpod.disconnect()
     return None
 
+def testProtocolTemplate():
+    from ProtocolTemplate import ProtocolTemplate
+    import BpodUtils
+    bpodPort = BpodUtils.findBpodUSBPort()
+    ds = testReportCard()
+    myBpod, rc = ProtocolTemplate.runProtocol(bpodPort, ds)
+
 def testCalibration():
+    from Calibrate import Calibrate
+    valveNum = 1
+    pulseDuration = 60
+    numPulses = 10
+
+    calPath, pointDict = Calibrate.addPoint(valveNum, pulseDuration, numPulses)
+    Calibrate.updatePoint(valveNum, calPath, pointDict)
+    Calibrate.updateCoeffs(valveNum, calPath)
     return None
 
 class BpodUtilsError(Exception):

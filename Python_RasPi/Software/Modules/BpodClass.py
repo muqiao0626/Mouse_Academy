@@ -72,7 +72,6 @@ class BpodObject(object):
         self.syncConfig = [255, 1] # [Channel,Mode] 255 = no sync, otherwise set to a hardware channel number. Mode 0 = flip logic every trial, 1 = every state
         self.connect(serialPortName)
         self.getModuleInfo()
-        self.set_protocol()
         self.setup()
 
     def updateSettings(self, data):
@@ -98,23 +97,23 @@ class BpodObject(object):
         self.updateCurrentDataFolder()
         self.updateCurrentDataFile()
         self.updateSession()
+        from ReportCardClass import ReportCard
+        rc = ReportCard(self.subject)
+        self.protocol = rc.currentProtocol
         print('Subject: ', self.subject, '\nDate: ', self.date, '\nSession: ', self.session)
-    def set_protocol(self):
-        #dir, filename = os.path.split(path)
-        frames = inspect.getouterframes(inspect.currentframe())
-        fullpath = frames[2][1]
-        dir, filename = os.path.split(fullpath)
-        self.protocolFolder = dir
-        sys.path.append(dir)
-        protStr, ext = os.path.splitext(filename)
+        return rc
+        
+    def set_protocol(self, protStr):
         self.protocol = protStr
         self.updateCurrentDataFolder()
         self.updateCurrentDataFile()
+        protocolFolder = importlib.import_module(protStr, package=None)
         try:
             softCodeHandlerStr = "SoftCodeHandler_" + self.protocol
-            self.softCodeMod = importlib.import_module(softCodeHandlerStr, package=None)
-        except:
+            self.softCodeMod = importlib.import_module(softCodeHandlerStr, package=protStr)
+        except Exception as e:
             self.disconnect()
+            print(e)
             raise ImportError("SoftCodeHandler_%s.py not found." % self.protocol)
         
         try:
@@ -841,13 +840,17 @@ class BpodObject(object):
         Confirmed = self.serialObject.read(1,'uint8');
         if (not Confirmed):
             raise BpodError('Error: Failed to reset serial message library.')
+        
     def getValveTimes(self, rewardAmount, targetValves):
         times = [0 for valve in targetValves]
         for i, valve in enumerate(targetValves):
             filename = os.path.join(self.calibrationFileFolder, 'valve_calibration_%d.json' % valve)
-            with open(filename, 'r') as f:
-                s = f.read()
-                d = json.loads(s)
+            try:
+                with open(filename, 'r') as f:
+                    s = f.read()
+                    d = json.loads(s)
+            except FileNotFoundError:
+                raise BpodError('Error: valve calibration file not found.')
             #calibration point values string to float
             invcoeffs = [float(c) for c in d["invcoeffs"]]
             p = np.poly1d(invcoeffs)

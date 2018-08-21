@@ -34,8 +34,10 @@ def addPoint(valveNum, pulseTime, numPulses):
     valveTime = pulseTime/1000
     valveBin = 2**(valveNum-1)
     # Find name of port
-    portName = BpodUtils.getDevices()
+    portName = BpodUtils.findBpodUSBPort()
     myBpod = BpodObject(portName)
+    rc = myBpod.set_subject('Calibrator')
+    rc.currentProtocol = 'Calibrate'
     calFolder = myBpod.calibrationFileFolder
     calFile = "valve_calibration_%d.json" % valveNum
     calPath = os.path.join(calFolder, calFile)
@@ -157,3 +159,4 @@ def main(argv):
     
 if __name__ == "__main__":
     main(sys.argv[1:])
+

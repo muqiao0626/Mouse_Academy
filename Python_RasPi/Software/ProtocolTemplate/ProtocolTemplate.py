@@ -19,7 +19,7 @@ import argparse
 import traceback
 from serial.tools.list_ports_linux import comports
 from Modules import BpodClass, StateMachineAssembler, BpodUtils
-import report_card as rc
+from ReportCardClass import ReportCard
 import json
 
 ######################################################################
@@ -34,7 +34,7 @@ def main(argv):
                         help='name of current animal (e.g. M0)')
     args = parser.parse_args()
     sub = args.subject[0]
-    mouse = rc.ReportCard(sub)
+    mouse = ReportCard(sub)
     mouse.load()
     
     bpodPort = BpodUtils.findBpodUSBPort()
@@ -81,7 +81,6 @@ def runProtocol(bpodPort, reportCard):
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Timeout": timeout,
                            "Session Duration (min)": sessionDurationMinutes})
-    sc = myBpod.softCodeHandler
     
     currentTrial = 0
     exitPauseTime = 1
@@ -110,10 +109,12 @@ def runProtocol(bpodPort, reportCard):
             leftCorrect = 'RewardLeft'
             rightCorrect = 'Timeout'
             displayLED = 'PWM1'
+            rewardState = 'RewardLeft'
         else:
             leftCorrect = 'Timeout'
             rightCorrect = 'RewardRight'
             displayLED = 'PWM3'
+            rewardState = 'RewardRight'
             
         sma.addState('Name', 'WaitForPoke',
                      'Timer', 0,
@@ -153,9 +154,6 @@ def runProtocol(bpodPort, reportCard):
         #if correct and water rewarded, update water and reset streak
         if rewarded:
             sessionWater += 0.001*rewardAmount
-            if centerRewarded>0:
-                sessionWater += 0.001*centerRewarded
-            numConsecutiveCorrect = 0
 
         elapsed_time = time.time()-startTime
         currentTrial = currentTrial+1
