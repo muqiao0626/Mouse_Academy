@@ -22,7 +22,7 @@ import sys
 import os
 import site
 
-def main():
+def main(argv):
     rasPiSoftwarePath = os.path.dirname(os.path.realpath(__file__))
     modulePath = os.path.join(rasPiSoftwarePath, 'Modules')
     packages = site.getusersitepackages()
