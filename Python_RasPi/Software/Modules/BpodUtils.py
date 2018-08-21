@@ -16,6 +16,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os, sys
 import argparse
 import traceback
+import serial
+import time
 from serial.tools.list_ports_linux import comports
 
 #find directories
@@ -52,7 +54,10 @@ def getDevices():
         portName = port[0]
         device = l[0].strip(')')
         devices.update({device:portName})
-        
+    return devices
+
+def printDevices():
+    devices = getDevices()
     print('Devices:')
     for device in devices:
         portname = devices[device]
@@ -72,10 +77,11 @@ def findBpodUSBPort():
     devices = getDevices()
     for device in devices:
         portname = devices[device]
-        if 'Arduino Due' in portname:
-            if not 'Prog' in portname:
+        if 'Arduino Due' in device:
+            if not 'Prog' in device:
                 bpodPort = portname
                 foundBpodPort = True
+                break
     if foundBpodPort:
         return bpodPort
     else:
@@ -87,10 +93,11 @@ def findBpodProgPort():
     devices = getDevices()
     for device in devices:
         portname = devices[device]
-        if 'Arduino Due' in portname:
-            if 'Prog' in portname:
+        if 'Arduino Due' in device:
+            if 'Prog' in device:
                 bpodPort = portname
                 foundBpodPort = True
+                break
     if foundBpodPort:
         return bpodPort
     else:
@@ -116,15 +123,16 @@ def findMegaPort():
                 trySer.reset_output_buffer()
                 trySer.reset_input_buffer()
                 megaFound = True
-                megaName = key
+                megaPort = devices[key]
                 megaSer = trySer
+                megaSer.close()
                 break
             else:
                 trySer.close()
     if not megaFound:
         raise DeviceError('Arduino Mega 2560 not found.')
     
-    return megaSer
+    return devices[key]
 
 class DeviceError(Exception):
     pass
