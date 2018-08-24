@@ -17,13 +17,13 @@ import sys, os
 import json
 import datetime as dt
 import BpodClass
-import BpodUtils
+import AcademyUtils
 
 class ReportCard():
     def __init__(self, subjectName):
         self.tagID = ''
         self.mouseID = subjectName
-        self.reportCardFolder = BpodUtils.getReportCardDir()
+        self.reportCardFolder = AcademyUtils.getReportCardDir()
         self.reportCardFile = os.path.join(self.reportCardFolder, '%s.json' % self.mouseID)
         self.startDate = 0
         self.startWeight = 0
@@ -135,5 +135,5 @@ class ReportCard():
                             'trainingAllowed': self.trainingAllowed
                             })
         with open(self.reportCardFile, 'w') as f:
-            jsonStr = json.dumps(self.report, sort_keys=True, indent=4, separators=(',', ': '), default=BpodUtils.json_serial)
+            jsonStr = json.dumps(self.report, sort_keys=True, indent=4, separators=(',', ': '), default=AcademyUtils.json_serial)
             f.write(jsonStr)

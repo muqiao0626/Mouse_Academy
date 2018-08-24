@@ -22,7 +22,7 @@ def testBpodUtils():
     try:
         import BpodUtils
     except ImportError as e:
-        raise BpodUtilsError(e)
+        raise AcademyUtilsError(e)
     
     modulesDir = BpodUtils.getModulesDir()
     softwareDir = BpodUtils.getSoftwareDir()
@@ -82,5 +82,13 @@ def testCalibration():
     Calibrate.updateCoeffs(valveNum, calPath)
     return None
 
-class BpodUtilsError(Exception):
+def testEnrollment():
+    import RFID.Enrollment as Enrollment
+    enrollmentSuccessful = Enrollment.main()
+    if enrollmentSuccessful:
+        print('Enrollment successful.')
+    else:
+        print('Enrollment unsuccessful.')
+    
+class AcademyUtilsError(Exception):
     pass

@@ -21,7 +21,7 @@ import json
 import numpy as np
 from BpodClass import BpodObject
 from StateMachineAssembler import stateMachine
-import BpodUtils
+import AcademyUtils
 
 def addPoint(valveNum, pulseTime, numPulses):
     if numPulses > 200:
@@ -34,7 +34,7 @@ def addPoint(valveNum, pulseTime, numPulses):
     valveTime = pulseTime/1000
     valveBin = 2**(valveNum-1)
     # Find name of port
-    portName = BpodUtils.findBpodUSBPort()
+    portName = AcademyUtils.findBpodUSBPort()
     myBpod = BpodObject(portName)
     rc = myBpod.set_subject('Calibrator')
     rc.currentProtocol = 'Calibrate'

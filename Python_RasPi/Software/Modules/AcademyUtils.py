@@ -17,6 +17,7 @@ import os, sys
 import argparse
 import traceback
 import serial
+import json
 import time
 from serial.tools.list_ports_linux import comports
 
@@ -51,6 +52,22 @@ def getCalibrationDir():
 def getReportCardDir():
     reportCardDir = os.path.join(getDataDir(), 'ReportCards')
     return reportCardDir
+
+def getRosterPath():
+    rosterPath = os.path.join(getSoftwareDir(), 'RFID', 'Roster.json')
+    if not os.path.isfile(rosterPath):
+        emptyRoster = {'id':{}}
+        with open(rosterPath, 'w') as f:
+            f.write(json.dumps(emptyRoster, sort_keys=True, indent=2, separators=(',', ': '), default=json_serial))
+    
+    return rosterPath
+
+def getRoster():
+    rosterPath = getRosterPath()
+    with open(rosterPath, 'r') as f:
+        jsonstr = f.read()
+        roster = json.loads(jsonstr)
+    return roster    
 
 def getDevices():
     iterator = sorted(comports())

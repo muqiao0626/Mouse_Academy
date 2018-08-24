@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os, sys
 import inspect
-import BpodUtils
+import AcademyUtils
 import struct
 import math
 import time
@@ -53,12 +53,12 @@ class BpodObject(object):
         self.stateMachineInfo.inputChannelNames = ()
         self.stateMachineInfo.nOutputChannels = 0
         self.stateMachineInfo.outputChannelNames = ()
-        self.calibrationFileFolder = BpodUtils.getCalibrationDir()
+        self.calibrationFileFolder = AcademyUtils.getCalibrationDir()
         self.subject = 'DummySubject'
         self.protocol = ''
         self.protocolFolder = ''
         self.date = datetime.date.today().strftime("%b%d_%y")
-        self.dataFolder = BpodUtils.getDataDir()
+        self.dataFolder = AcademyUtils.getDataDir()
         if not os.path.exists(self.dataFolder):
             os.mkdir(self.dataFolder)
         self.remoteDataFolder = "C:\Data"
@@ -147,7 +147,7 @@ class BpodObject(object):
         dataDict = self.structToDict(self.data)
         dataDict.update({'Settings':self.settings})
         with open(fullPath, 'a+') as f:
-            f.write(json.dumps(dataDict, sort_keys=True, indent=2, separators=(',', ': '), default=BpodUtils.json_serial))
+            f.write(json.dumps(dataDict, sort_keys=True, indent=2, separators=(',', ': '), default=AcademyUtils.json_serial))
             f.write('\n')
         return fullPath
     
