@@ -18,22 +18,22 @@ import argparse
 import traceback
 from serial.tools.list_ports_linux import comports
 
-def testBpodUtils():
+def testAcademyUtils():
     try:
-        import BpodUtils
+        import AcademyUtils
     except ImportError as e:
         raise AcademyUtilsError(e)
     
-    modulesDir = BpodUtils.getModulesDir()
-    softwareDir = BpodUtils.getSoftwareDir()
-    rasPiDir = BpodUtils.getRasPiDir()
-    dataDir = BpodUtils.getDataDir()
-    calibrationDir = BpodUtils.getCalibrationDir()
-    reportCardDir = BpodUtils.getReportCardDir()
-    devices = BpodUtils.getDevices()
-    bpodUSBPort = BpodUtils.findBpodUSBPort()
-    bpodProgPort = BpodUtils.findBpodProgPort()
-    megaPort = BpodUtils.findMegaPort()
+    modulesDir = AcademyUtils.getModulesDir()
+    softwareDir = AcademyUtils.getSoftwareDir()
+    rasPiDir = AcademyUtils.getRasPiDir()
+    dataDir = AcademyUtils.getDataDir()
+    calibrationDir = AcademyUtils.getCalibrationDir()
+    reportCardDir = AcademyUtils.getReportCardDir()
+    devices = AcademyUtils.getDevices()
+    bpodUSBPort = AcademyUtils.findBpodUSBPort()
+    bpodProgPort = AcademyUtils.findBpodProgPort()
+    megaPort = AcademyUtils.findMegaPort()
     
     print('Modules:', modulesDir)
     print('Software:', softwareDir)
@@ -44,7 +44,7 @@ def testBpodUtils():
     print('Bpod USB Port:', bpodUSBPort)
     print('Bpod Prog Port:', bpodProgPort)
     print('Mega Port:', megaPort)
-    BpodUtils.printDevices()
+    AcademyUtils.printDevices()
     return True
 
 def testReportCard():
@@ -56,9 +56,9 @@ def testReportCard():
     return ds
 
 def testBpodClass():
-    import BpodUtils
+    import AcademyUtils
     from BpodClass import BpodObject
-    bpodPort = BpodUtils.findBpodUSBPort()
+    bpodPort = AcademyUtils.findBpodUSBPort()
     myBpod = BpodObject(bpodPort)
     myBpod.set_subject('DummySubject')
     myBpod.disconnect()
@@ -66,8 +66,8 @@ def testBpodClass():
 
 def testProtocolTemplate():
     from ProtocolTemplate import ProtocolTemplate
-    import BpodUtils
-    bpodPort = BpodUtils.findBpodUSBPort()
+    import AcademyUtils
+    bpodPort = AcademyUtils.findBpodUSBPort()
     ds = testReportCard()
     myBpod, rc = ProtocolTemplate.runProtocol(bpodPort, ds)
 
