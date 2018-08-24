@@ -26,6 +26,7 @@ import site
 def main(argv):
     rasPiSoftwarePath = os.path.dirname(os.path.realpath(__file__))
     modulePath = os.path.join(rasPiSoftwarePath, 'Modules')
+    rfidPath = os.path.join(rasPiSoftwarePath, 'RFID')
     packages = site.getusersitepackages()
     sitePackages = site.getsitepackages()
     sp = None
@@ -33,11 +34,14 @@ def main(argv):
         if 'package' in s:
             sp = s
             break
+    print('Writing path file to:')
     print(sp)
     with open(os.path.join(sp, 'MouseAcademyPi.pth'), 'w') as pth:
         pth.write(rasPiSoftwarePath)
         pth.write('\n')
         pth.write(modulePath)
+        pth.write('\n')
+        pth.write(rfidPath)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
