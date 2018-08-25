@@ -21,6 +21,27 @@ import time
 import re
 import AcademyUtils
 
+def getMegaSer(megaPort=None):
+    if megaPort is None:
+        megaPort = AcademyUtils.findMegaPort()
+    megaSer = serial.Serial(megaPort, 9600, timeout=1)
+    try:
+        setupMsg = megaSer.readline().decode().strip()
+    except Exception as e:
+        raise ReadError('No setup message:\n%s' %e)
+    time.sleep(0.05)
+    try:
+        readyMsg = megaSer.readline().decode().strip()
+    except Exception as e:
+        raise ReadError('No ready message:\n%s' %e)
+    
+    return megaSer
+
+def resetMega(megaSer):
+    megaSer.close()
+    newSer = getMegaSer()
+    return newSer
+
 #write two-byte code for reading tag from RFID reader serial input
 def readTag(megaSer, readerNum):
     megaSer.reset_output_buffer()
