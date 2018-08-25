@@ -40,7 +40,7 @@ read3 = False
 
 def main():
     global megaSer
-    global arduinoPort
+    global megaPort
     global door1open
     global door2open
     global read1
@@ -63,7 +63,21 @@ def main():
     reportCards = {}
     for sub in range(1, numSubjects+1):
         subject = input('Name of subject %d? ' %sub)
-        reportCards.update({subject:ReportCard(subject)})
+        rc = ReportCard(subject)
+        yn = input('Current protocol for "%s" is "%s". Change protocol? (y/n)' %(subject, rc.currentProtocol))
+        if yn.lower()=='y' or yn.lower()=='n':
+            ynGood = True
+        else:
+            ynGood = False
+        while not ynGood:
+            yn = input('Current protocol for "%s" is "%s". Change protocol? (y/n)' %(subject, rc.currentProtocol))
+            if yn.lower()=='y' or yn.lower()=='n':
+                ynGood = True
+        if yn=='y':
+            protInp = input('Enter new protocol for "%s": ' %subject)
+            print('Setting protocol for %s to %s.' %(subject, protInp))
+            rc.setCurrentProtocol(protInp)
+        reportCards.update({subject:rc})
         
     megaSer = MegaCom.getMegaSer()
     bpodPort = AcademyUtils.findBpodUSBPort()
@@ -204,13 +218,13 @@ def reset():
     print("door2open: ", door2open)
     MegaCom.resetMega(megaSer)
     if door1open:
-        openDoor(megaSer, 1)
+        MegaCom.openDoor(megaSer, 1)
     else:
-        closeDoor(megaSer, 1)
+        MegaCom.closeDoor(megaSer, 1)
     if door2open:
-        openDoor(megaSer, 2)
+        MegaCom.openDoor(megaSer, 2)
     else:
-        closeDoor(megaSer, 2)
+        MegaCom.closeDoor(megaSer, 2)
     return reset
 
 if __name__ == '__main__':
