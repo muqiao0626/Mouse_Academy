@@ -74,9 +74,7 @@ def main():
     startTime = time.time()
     elapsed_time = 0
 
-    camSer = serial.Serial(camPort, 9600, timeout=1)
-    time.sleep(2)
-    connected = camSer.read().decode()
+    camSer, connected = OpenMVCom.connect()
     print('connected: ', connected)
     if connected:
         print("Successful connection to OpenMV cam.")

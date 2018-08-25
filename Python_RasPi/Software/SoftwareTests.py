@@ -16,7 +16,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 import os, sys
 import argparse
 import traceback
+import time
+import serial
 from serial.tools.list_ports_linux import comports
+import AcademyUtils
 
 def testAcademyUtils():
     try:
@@ -56,7 +59,6 @@ def testReportCard():
     return ds
 
 def testBpodClass():
-    import AcademyUtils
     from BpodClass import BpodObject
     bpodPort = AcademyUtils.findBpodUSBPort()
     myBpod = BpodObject(bpodPort)
@@ -66,7 +68,6 @@ def testBpodClass():
 
 def testProtocolTemplate():
     from ProtocolTemplate import ProtocolTemplate
-    import AcademyUtils
     bpodPort = AcademyUtils.findBpodUSBPort()
     ds = testReportCard()
     myBpod, rc = ProtocolTemplate.runProtocol(bpodPort, ds)
@@ -89,6 +90,20 @@ def testEnrollment():
         print('Enrollment successful.')
     else:
         print('Enrollment unsuccessful.')
+    return enrollmentSuccessful
+        
+def testRecord():
+    import OpenMV.OpenMVCom as OpenMVCom
+    movSecs = 3
+    camSer, connected = OpenMVCom.connect()
+    print('Connected:', connected)
+    time.sleep(1)
+
+    compTimeObj = OpenMVCom.startRecording(camSer)
+    time.sleep(movSecs)
+    actualStartTimeObj, endTimeObj, dur = OpenMVCom.stopRecording(camSer)
+    print('Actual recording time: %d seconds.' % dur)
+    OpenMVCom.disconnect(camSer)
     
 class AcademyUtilsError(Exception):
     pass

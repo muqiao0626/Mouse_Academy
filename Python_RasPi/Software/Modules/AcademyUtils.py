@@ -110,7 +110,20 @@ def findBpodUSBPort():
     else:
         raise DeviceError('Arduino Due Native USB Port not found.')
         
-
+def getCamPort():
+    foundCamPort = False
+    devices = getDevices()
+    for device in devices:
+        portname = devices[device]
+        if 'OpenMV' in device:
+            camPort = portname
+            foundCamPort = True
+            break
+    if foundCamPort:
+        return camPort
+    else:
+        raise DeviceError('OpenMV Cam USB COM Port not connected.')
+    
 def findBpodProgPort():
     foundBpodPort = False
     devices = getDevices()
