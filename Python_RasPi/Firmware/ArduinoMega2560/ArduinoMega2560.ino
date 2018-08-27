@@ -1,21 +1,5 @@
-//// Copyright (C) 2018 Meister Lab at Caltech
-//// -----------------------------------------------------
-////
-//// This program is free software: you can redistribute it and/or modify
-//// it under the terms of the GNU General Public License as published by
-//// the Free Software Foundation, either version 3 of the License, or
-//// (at your option) any later version.
-////
-//// This program is distributed in the hope that it will be useful,
-//// but WITHOUT ANY WARRANTY; without even the implied warranty of
-//// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//// GNU General Public License for more details.
-////
-//// You should have received a copy of the GNU General Public License
-//// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 #include <Servo.h>
+#include <stdio.h>
 
 const int servoPin1 = 8;
 const int servoPin2 = 9;
@@ -27,7 +11,14 @@ const float R_DIV = 3300.0; // Measured resistance of 3.3k resistor
 
 const int highWrite = 170;
 const int lowWrite = 5;
+
+const char readCompleteMsg[18] = "read tag complete";
+const char openMsg[19] = "open door complete";
+const char closeMsg[20] = "close door complete";
+const char obstructMsg[24] = "obstruction encountered";
 int idLen = 12;
+
+char currentTag[13] = "000000000000";
 
 Servo servo1;
 Servo servo2;
@@ -39,11 +30,22 @@ int RFIDResetPin3 = 13;
 char tag1[13];
 char tag2[13];
 char tag3[13];
+float fsrForce;
 
-char blankTag[13] = "000000000000";
-void setTag(char oldTag[13], char newTag[13]){
-  for (int i=0; i<13; i++){
-    oldTag[i] = newTag[i];
+const char blankTag[13] = "000000000000";
+void setTag1(char newTag[13]) {
+  for (int i = 0; i < 13; i++) {
+    tag1[i] = newTag[i];
+  }
+}
+void setTag2(char newTag[13]) {
+  for (int i = 0; i < 13; i++) {
+    tag2[i] = newTag[i];
+  }
+}
+void setTag3(char newTag[13]) {
+  for (int i = 0; i < 13; i++) {
+    tag3[i] = newTag[i];
   }
 }
 
@@ -53,9 +55,9 @@ void setup() {
   Serial1.begin(9600);
   Serial2.begin(9600);
   Serial3.begin(9600);
-  setTag(tag1, blankTag);
-  setTag(tag2, blankTag);
-  setTag(tag3, blankTag);
+  setTag1(blankTag);
+  setTag2(blankTag);
+  setTag3(blankTag);
   //reset RFID readers
   pinMode(RFIDResetPin1, INPUT);
   //digitalWrite(RFIDResetPin1, HIGH);
@@ -63,10 +65,10 @@ void setup() {
   //digitalWrite(RFIDResetPin2, HIGH);
   pinMode(RFIDResetPin3, INPUT);
   //digitalWrite(RFIDResetPin3, HIGH);
-  
+
   pinMode(FSR_PIN1, INPUT);
   pinMode(FSR_PIN2, INPUT);
-  
+
   servo1.attach(servoPin1, 400, 1900);
   delay(50);
   //openDoor(servo1, 1);
@@ -80,101 +82,115 @@ void setup() {
 }
 
 void loop() {
-    readTag(Serial1, tag1);
-    readTag(Serial2, tag2);
-    readTag(Serial3, tag3);
+  readTag(1);
+  readTag(2);
+  readTag(3);
 
-  if (Serial.available() >= 2){
+  if (Serial.available() >= 2) {
     char commandRead = Serial.read();
     char idRead = Serial.read();
-    
+
     //CHECKING FOR READ COMMAND
-    if (commandRead == '8'){
-      
-      Serial.println("read tag complete");
-      if (idRead =='1'){
+    if (commandRead == '8') {
+
+      Serial.println(readCompleteMsg);
+      if (idRead == '1') {
         Serial.println(tag1);
-        setTag(tag1, blankTag);
+        setTag1(blankTag);
       }
-      else if (idRead =='2'){
+      else if (idRead == '2') {
         Serial.println(tag2);
-        setTag(tag2, blankTag);
+        setTag2(blankTag);
       }
-      else if (idRead =='3'){
+      else if (idRead == '3') {
         Serial.println(tag3);
-        setTag(tag3, blankTag);
+        setTag3(blankTag);
       }
 
     }
-    
+
     //CHECKING FOR OPEN DOOR COMMAND
-    else if (commandRead == '6'){
-      if (idRead == '1'){
+    else if (commandRead == '6') {
+      if (idRead == '1') {
         openDoor(servo1);
       }
-      if (idRead == '2'){
+      if (idRead == '2') {
         openDoor(servo2);
       }
-      Serial.println("open door complete");
+      Serial.println(openMsg);
     }
-    
+
     //CHECKING FOR CLOSE DOOR COMMAND
-    else if (commandRead == '7'){
+    else if (commandRead == '7') {
       int closed = 0;
-      if (idRead == '1'){
+      if (idRead == '1') {
         closed = closeDoor(servo1, 1);
-        if (closed == 1){
-          Serial.println("close door complete");
+        if (closed == 1) {
+          Serial.println(closeMsg);
         }
       }
-      if (idRead == '2'){
+      if (idRead == '2') {
         closed = closeDoor(servo2, 2);
-        if (closed == 1){
-          Serial.println("close door complete");
+        if (closed == 1) {
+          Serial.println(closeMsg);
         }
       }
     }
 
   }
-  delay(50);
+  delay(100);
 }
 
-
-
-
-
-
-
 // READ A TAG FROM A SINGLE RFID READER
-void readTag(HardwareSerial ser, char workingTag[13]){
-  char currentTag[13] = "000000000000";
+void readTag(int tagNum) {
+  currentTag[13] = "000000000000";
+  HardwareSerial* serPointer;
+   int address;
+
+  if (tagNum == 1){
+    serPointer = &Serial1;
+  }
+  else if (tagNum == 2){
+    serPointer = &Serial2;
+  }
+  else if (tagNum == 3){
+    serPointer = &Serial3;
+  }
   boolean reading = false;
   int i = 0;
   int readByte;
   char peekByte;
-  if (ser.available() > 0){
-    peekByte = ser.peek(); //peep next available byte
+  if (serPointer->available() >= 10) {
+    peekByte = serPointer->peek(); //peep next available byte
     if (peekByte == 2) {
-      readByte = ser.read();
+      readByte = serPointer->read();
       reading = true; //begining of tag
-      
-      while (reading == true){
-        readByte = ser.read();
+
+      while (reading == true) {
+        readByte = serPointer->read();
         if (readByte == 3) {
+
+          if (tagNum == 1) {
+            setTag1(currentTag);
+          }
+          else if (tagNum == 2) {
+            setTag2(currentTag);
+          }
+          else if (tagNum == 3) {
+            setTag3(currentTag);
+          }
           reading = false; //end of tag
-          setTag(workingTag, currentTag);
         }
 
         else if (readByte != 10 && readByte != 13) {
           //store the tag
-          if (i<sizeof(currentTag)){
+          if (i < sizeof(currentTag)) {
             currentTag[i] = readByte;
           }
-        i++;
+          i++;
         }
         delay(2);
       }
-      
     }
     else {
       reading = false;
@@ -182,34 +198,36 @@ void readTag(HardwareSerial ser, char workingTag[13]){
   }
 }
 
-int closeDoor(Servo servo, int servonum){
+int closeDoor(Servo servo, int servonum) {
   int pos = servo.read();
   int closed = 0;
-  float forceInit = currentForce(servonum);
-  float forceNow = 0.0;
+  currentForce(servonum);
+  float forceInit = fsrForce;
+  float forceNow;
   //don't bother checking force at beginning and end
-  for (int theta=pos; theta<highWrite-3; theta+=3){
-    
-    if (theta<lowWrite+6 || theta>highWrite-3){
+  for (int theta = pos; theta < highWrite - 3; theta += 3) {
+
+    if (theta < lowWrite + 6 || theta > highWrite - 3) {
       servo.write(theta);
       delay(15);
       closed = 1;
     }
-    
 
-    
-    else{
-        servo.write(theta);
-        delay(15);
-        forceNow = currentForce(servonum) - forceInit;
-      if (forceNow > 5.0) {
+
+
+    else {
+      servo.write(theta);
+      delay(15);
+      currentForce(servonum);
+      forceNow = fsrForce - forceInit;
+      if (forceNow > 10.0) {
         //reopen door
         servo.write(lowWrite);
         //print serial message that close door failed
-        Serial.print("obstruction encountered! Initforce: ");
-        Serial.print(forceInit);
-        Serial.print(" forceNow: ");
-        Serial.println(forceNow);
+        Serial.println(obstructMsg);
+        //Serial.print(forceInit);
+       // Serial.print(" forceNow: ");
+        //Serial.println(forceNow);
         return 0;
       }
     }
@@ -219,23 +237,23 @@ int closeDoor(Servo servo, int servonum){
   return 1;
 }
 
-void openDoor(Servo servo){
+void openDoor(Servo servo) {
   int pos = servo.read();
-  for (int theta=pos; theta>lowWrite+3; theta-=3){
+  for (int theta = pos; theta > lowWrite + 3; theta -= 3) {
     servo.write(theta);
     delay(15);
   }
 }
 
 
-float currentForce(int doornum) 
+void currentForce(int doornum)
 {
   int fsrADC;
-  if (doornum == 1){
+  if (doornum == 1) {
     fsrADC = analogRead(FSR_PIN1);
   }
-  else if (doornum ==2){
-    
+  else if (doornum == 2) {
+
     fsrADC = analogRead(FSR_PIN2);
   }
   // If the FSR has no pressure, the resistance will be
@@ -244,20 +262,18 @@ float currentForce(int doornum)
   {
     // Use ADC reading to calculate voltage:
     float fsrV = fsrADC * VCC / 1023.0;
-    // Use voltage and static resistor value to 
+    // Use voltage and static resistor value to
     // calculate FSR resistance:
     float fsrR = R_DIV * (VCC / fsrV - 1.0);
     float fsrG = 1.0 / fsrR;
     // Serial.println("Resistance: " + String(fsrR) + " ohms");
     // Guesstimate force based on slopes in figure 3 of
     // FSR datasheet:
-    float force;
     // Break parabolic curve down into two linear slopes:
-    if (fsrR <= 600) 
-      force = (fsrG - 0.00075) / 0.00000032639;
+    if (fsrR <= 600)
+      fsrForce = (fsrG - 0.00075) / 0.00000032639;
     else
-      force =  fsrG / 0.000000642857;
-    return force;
+      fsrForce =  fsrG / 0.000000642857;
 
   }
   else
