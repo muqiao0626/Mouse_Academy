@@ -21,6 +21,45 @@ import time
 import re
 import AcademyUtils
 
+#Initialize global variables
+def init():
+    
+    global megaSer
+    global megaPort
+    global door1open
+    global door2open
+    global read1
+    global read2
+    global read3
+    global tag1
+    global tag2
+    global tag3
+    
+    door1open = True
+    door2open = False
+    megaSer = None
+    tag1 = "000000000000"
+    tag2 = "000000000000"
+    tag3 = "000000000000"
+    read1 = False
+    read2 = False
+    read3 = False
+    megaPort = AcademyUtils.findMegaPort()
+    megaSer = getMegaSer(megaPort)
+    
+    globalVars = {'door1open':door1open,
+                  'door2open':door2open,
+                  'megaSer':megaSer,
+                  'tag1':tag1,
+                  'tag2':tag2,
+                  'tag3':tag3,
+                  'read1':read1,
+                  'read2':read2,
+                  'read3':read3,
+                  'megaSer':megaSer
+        }
+    return globalVars
+
 def getMegaSer(megaPort=None):
     if megaPort is None:
         megaPort = AcademyUtils.findMegaPort()
@@ -52,6 +91,7 @@ def readTag(megaSer, readerNum):
     for check in range(3):
         time.sleep(0.05)
         msgstr = megaSer.readline()
+        print(msgstr)
         try:
             msgstr = msgstr.decode().strip()
         except UnicodeDecodeError:
@@ -62,7 +102,7 @@ def readTag(megaSer, readerNum):
             #rString = megaSer.readline()
             break
     if not completeMsg:
-        raise ReadError('Did not receive message indicating completed read.')
+        raise ReadError('Did not receive message indicating completed read:\n%s' %msgstr)
     charList = ['!' for x in range(12)]
     for b in range(1, 13):
         try:
@@ -76,14 +116,24 @@ def readTag(megaSer, readerNum):
             break
     tagString = ''.join(charList)
     megaSer.read(2)
+    
+    if readerNum == 1:
+        tag1 = searchForTag(tagString)
+        return tag1
+    elif readerNum == 2:
+        tag2 = searchForTag(tagString)
+        return tag2
+    elif readerNum == 3:
+        tag3 = searchForTag(tagString)
+        return tag3
+    else:
+        raise MegaComError('Error: readerNum must be 1, 2, or 3.')
     #if isinstance(rString, bytes):
     #    try:
     #        print(rString)
     #        rString = rString.decode()
     #    except UnicodeDecodeError as ude:
     #        raise ReadError("Failed at: %s" % rString)
-    #rString = rString.strip()
-    return searchForTag(tagString)
 
 #read all tags available in reader's serial buffer
 def clearBuffer(megaSer, readerNum):
@@ -110,6 +160,8 @@ def clearBuffer(megaSer, readerNum):
 
 #write two-byte code for operating servo to open door
 def openDoor(megaSer, servoNum):
+    global door1open
+    global door2open
     commandStr = '6%d' % servoNum
     megaSer.write(commandStr.encode())
     completeMsg = False
@@ -117,11 +169,19 @@ def openDoor(megaSer, servoNum):
     msgstr = megaSer.readline().decode()
     completeMsg = "open door complete" in msgstr.lower()
     if not completeMsg:
-        reset()
-        #raise ServoError('Door %d failed to open: %s' % (servoNum, msgstr))
+        raise MegaComError('Mega not responding; door %d failed to open: %s' % (servoNum, msgstr))
+    else:
+        if servoNum == 1:
+            door1open = True
+        elif servoNum == 2:
+            door2open = True
+        else:
+            raise MegaComError('Error: servoNum must be 1 or 2.')
     
 #write two-byte coe for operating servo to close door
 def closeDoor(megaSer, servoNum):
+    global door1open
+    global door2open
     commandStr = '7%d' % servoNum
     megaSer.write(commandStr.encode())
     completeMsg = False
@@ -134,17 +194,23 @@ def closeDoor(megaSer, servoNum):
             print(obstructionMsg)
             raise ServoError('Door %d reopened due to obstruction.' % servoNum)
         else:
-            reset()
-            #raise ServoError('Door %d failed to close.' % servoNum)
+            raise MegaComError('Mega not responding; door %d failed to close.' % servoNum)
+    else:
+        if servoNum == 1:
+            door1open = False
+        elif servoNum == 2:
+            door2open = False
+        else:
+            raise MegaComError('Error: servoNum must be 1 or 2.')
 
     
 def resetMega():
-    global arduinoPort
+    global megaPort
     global megaSer
     global door1open
     global door2open
     megaSer.close()
-    megaSer = serial.Serial(arduinoPort, 9600)
+    megaSer = serial.Serial(megaPort, 9600)
     megaSer.readline()
     if door1open:
         openDoor(megaSer, 1)
@@ -177,9 +243,10 @@ def isTag(tagString, taglen=12):
     else:
         return False
 class ServoError(Exception):
-    def __init__(self, message):
-        self.message = message
+    pass
 
 class ReadError(Exception):
-    def __init__(self, message):
-        self.message = message
+    pass
+
+class MegaComError(Exception):
+    pass

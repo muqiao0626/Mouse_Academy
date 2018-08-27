@@ -92,6 +92,7 @@ class ReportCard():
             return 0
     def setCurrentProtocol(self, protocol):
         self.currentProtocol = protocol
+        self.save()
         
     def setMaxWater(self, amount):
         self.maxWater = amount

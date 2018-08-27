@@ -67,7 +67,15 @@ def getRoster():
     with open(rosterPath, 'r') as f:
         jsonstr = f.read()
         roster = json.loads(jsonstr)
-    return roster    
+    return roster
+
+def getSubjectToTag():
+    roster = getRoster()
+    subToTag = {}
+    for tag in roster['id']:
+        subToTag[roster['id'][tag]['mouseID']] = tag
+        
+    return subToTag
 
 def getDevices():
     iterator = sorted(comports())
