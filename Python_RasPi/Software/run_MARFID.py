@@ -89,7 +89,10 @@ def main():
     #try readers 1 and 2 for tag
         tracking = None
         globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
+        time.sleep(0.1) #attempting to read tags too quickly causes
+                        #errors in communicating with mega
         globalVars['tag2'] = MegaCom.readTag(globalVars['megaSer'], 2)
+        time.sleep(0.1)
         globalVars['read1'] = MegaCom.isTag(globalVars['tag1'])
         globalVars['read2'] = MegaCom.isTag(globalVars['tag2'])
         #print('tag2: ', tag2)
@@ -129,11 +132,11 @@ def main():
                         compTimeObj = OpenMVCom.startRecording(camSer)
                     except serial.serialutil.SerialException:
                         print('SerialException: OpenMV cam not connected.')
-                    protocol = importlib.import_module(reportCards[tracking].currentProtocol,
-                                                                                     package=reportCards[tracking].currentProtocol)
+                    protocol = reportCards[tracking].currentProtocol
+                    protocolModule = importlib.import_module('%s.%s' %(protocol,protocol))
                     print('%s beginning protocol "%s"' %(tracking, protocol))
                     try:
-                        myBpod, reportCards[tracking] = protocol.runProtocol(bpodPort, reportCards[tracking])
+                        myBpod, reportCards[tracking] = protocolModule.runProtocol(bpodPort, reportCards[tracking])
                     except Exception as e:
                         print("Bpod exception:\n%s" %e)
                         AcademyUtils.resetBpodPort()
@@ -176,7 +179,7 @@ def main():
                             while not returnedHome:
                                 time.sleep(0.1)
                                 globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
-                                if isTag(globalVars['tag1']) and tracking==tagIDtoSubject["id"][globalVars['tag1']]["mouseID"]:
+                                if MegaCom.isTag(globalVars['tag1']) and tracking==tagIDtoSubject["id"][globalVars['tag1']]["mouseID"]:
                                     returnedHome = True
                                     buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
                                     print("mouse %s returned to home cage" % tracking)

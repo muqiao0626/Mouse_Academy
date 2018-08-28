@@ -18,7 +18,7 @@ import os, sys
 import argparse
 import traceback
 from serial.tools.list_ports_linux import comports
-from Modules import BpodClass, StateMachineAssembler, BpodUtils
+from Modules import BpodClass, StateMachineAssembler, AcademyUtils
 from ReportCardClass import ReportCard
 import json
 

@@ -20,6 +20,7 @@ import serial
 import time
 import re
 import AcademyUtils
+import numpy as np
 
 #Initialize global variables
 def init():
@@ -91,7 +92,7 @@ def readTag(megaSer, readerNum):
     for check in range(3):
         time.sleep(0.05)
         msgstr = megaSer.readline()
-        print(msgstr)
+        #print(msgstr)
         try:
             msgstr = msgstr.decode().strip()
         except UnicodeDecodeError:
@@ -103,19 +104,9 @@ def readTag(megaSer, readerNum):
             break
     if not completeMsg:
         raise ReadError('Did not receive message indicating completed read:\n%s' %msgstr)
-    charList = ['!' for x in range(12)]
-    for b in range(1, 13):
-        try:
-            readByte = megaSer.read()
-            charList[b-1] = readByte.decode()
-        except UnicodeDecodeError:
-            #clear input buffer
-            print('UnicodeDecodeError')
-            print(charList, readByte)
-            megaSer.reset_input_buffer()
-            break
-    tagString = ''.join(charList)
-    megaSer.read(2)
+    time.sleep(0.01)
+    tagString = megaSer.readline().decode().strip()
+    #print(tagString)
     
     if readerNum == 1:
         tag1 = searchForTag(tagString)
@@ -194,7 +185,7 @@ def closeDoor(megaSer, servoNum):
             print(obstructionMsg)
             raise ServoError('Door %d reopened due to obstruction.' % servoNum)
         else:
-            raise MegaComError('Mega not responding; door %d failed to close.' % servoNum)
+            raise MegaComError('Mega not responding; door %d failed to close:\n%s' % (servoNum, msgstr))
     else:
         if servoNum == 1:
             door1open = False
