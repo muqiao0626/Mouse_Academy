@@ -138,8 +138,14 @@ void loop() {
     }
 
   }
-  delay(100);
+  delay(10);
 }
+
+
+
+
+
+
 
 // READ A TAG FROM A SINGLE RFID READER
 void readTag(int tagNum) {
@@ -205,11 +211,11 @@ int closeDoor(Servo servo, int servonum) {
   float forceInit = fsrForce;
   float forceNow;
   //don't bother checking force at beginning and end
-  for (int theta = pos; theta < highWrite - 3; theta += 3) {
+  for (int theta = pos; theta < highWrite - 6; theta += 6) {
 
-    if (theta < lowWrite + 6 || theta > highWrite - 3) {
+    if (theta < lowWrite + 6 || theta > highWrite - 6) {
       servo.write(theta);
-      delay(15);
+      delay(5);
       closed = 1;
     }
 
@@ -217,7 +223,7 @@ int closeDoor(Servo servo, int servonum) {
 
     else {
       servo.write(theta);
-      delay(15);
+      delay(5);
       currentForce(servonum);
       forceNow = fsrForce - forceInit;
       if (forceNow > 10.0) {
@@ -276,9 +282,7 @@ void currentForce(int doornum)
       fsrForce =  fsrG / 0.000000642857;
 
   }
-  else
-  {
-    //
-    return 0;
+  else{
+    fsrForce = 0;
   }
 }
