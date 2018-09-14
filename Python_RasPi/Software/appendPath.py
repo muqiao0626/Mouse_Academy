@@ -42,6 +42,8 @@ def main(argv):
         pth.write(modulePath)
         pth.write('\n')
         pth.write(rfidPath)
+        pth.write('\n')
+        pth.write('/home/pi/psychopy')
 
 if __name__ == "__main__":
     main(sys.argv[1:])

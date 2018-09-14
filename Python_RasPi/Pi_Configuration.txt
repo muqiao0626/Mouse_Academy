@@ -49,3 +49,8 @@ a) installing:
 b) correct version of java:
 1. sudo apt-get remove openjdk-8-jre-headless
 2. sudo apt-get install openjdk-8-jre
+
+python 3.5:
+conda config --add channels rpi
+conda install python=3.5
+conda create -n py35 python=3.5
