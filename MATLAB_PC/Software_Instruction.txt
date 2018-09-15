@@ -1,0 +1,6 @@
+# Software instruction
+# Mu Qiao July/2018
+
+The code was written in Matlab and has been tested under Matlab R2016a. To run the code, copy all the files under /Software/Matlab_PC/ into the MATLAB folder. Modify the ProtocolFiles.xlsx to include all the training procedures. The format of the excel file is: Procedure_name, Threshold_for_downgrade, Threshold_for_upgrade, Trials_in_a_session.
+
+First, run Initialization.m to initialize the program. Then, run Master.m. The program runs in an infinite loop. To exit running, pause the program and then stop the Master.m program.
