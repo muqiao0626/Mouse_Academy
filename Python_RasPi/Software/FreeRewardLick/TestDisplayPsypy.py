@@ -1,16 +1,19 @@
-from psychopy import visual, core  # import some libraries from PsychoPy
+import sys, os
+import execnet
 
-#create a window
-mywin = visual.Window([800,600], monitor="testMonitor", units="deg")
+def call_python_version(Version, Module, Function, ArgumentList):
+    gw      = execnet.makegateway("popen//python=python%s" % Version)
+    channel = gw.remote_exec("""
+        from %s import %s as the_function
+        channel.send(the_function(*channel.receive()))
+    """ % (Module, Function))
+    channel.send(ArgumentList)
+    return channel.receive()
 
-#create some stimuli
-grating = visual.GratingStim(win=mywin, mask="circle", size=3, pos=[-4,0], sf=3)
-fixation = visual.GratingStim(win=mywin, size=0.5, pos=[0,0], sf=0, rgb=-1)
-
-#draw the stimuli and update the window
-grating.draw()
-fixation.draw()
-mywin.update()
-
-#pause, so you get a chance to see it!
-core.wait(5.0)
+def main():
+    result = call_python_version("2.7", "TestDisplayPy2", "mainTest",  
+                             [])
+    print('result:', result)
+    
+if __name__ == "__main__":
+    main()

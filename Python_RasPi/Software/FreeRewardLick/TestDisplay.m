@@ -1,9 +1,9 @@
-function [screenXpixels, screenYpixels, width, height, maxLum] = TestDisplay()
+function stru = TestDisplay()
 
 % Clear the workspace and the screen
 sca;
 close all;
-clearvars;
+
 
 % Here we call some default settings for setting up Psychtoolbox
 PsychDefaultSetup(2);
@@ -94,5 +94,6 @@ KbStrokeWait;
 % all features related to PTB. Note: we leave the variables in the
 % workspace so you can have a look at them.
 sca;
+stru = {'ScreenXPixels':screenXpixels, 'ScreenYPixels':screenYpixels, 'Width':width, 'Height':height, 'MaxLum':maxLum};
 return;
 end
