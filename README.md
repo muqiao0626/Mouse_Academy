@@ -4,8 +4,6 @@
 
 Mouse Academy is an integrated platform for automated mice training. It is made of a social home cage, a radio frequency identification (RFID) access control tunnel and a training box. Mice are grouped together in the home cage where they can get free access to food and shelter. Water is provided only in the training box. Each mouse is implanted with a specific RFID chip whose information can be read from the RFID sensors. Based on the information from the RFID sensors, an Arduino circuit controls the opening of the gates, allowing only one animal at a time to access the training box. Once a mouse enters the training box, a protocol is initiated to train the mouse on a specific task using water rewards, and a video recording of the mouse’s behaviors is performed. The training box is controlled by Bpod, an open-source behavior control system (https://github.com/sanworks/Bpod).
 
-For more information, check Qiao et al. (2018) from Meister lab.
-
 ## Content
 
 ## 1. Design files
