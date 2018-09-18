@@ -108,23 +108,37 @@ def runProtocol(bpodPort, reportCard):
                      'OutputActions', ())
         sma.addState('Name', 'VariablePause',
                      'Timer', vptime,
-                     'StateChangeConditions', ('Tup', 'GratingFlipPause'),
+                     'StateChangeConditions', ('Tup', 'GratingFlipPause', 'Port1Out', 'WaitForInit', 'Port2In', 'FalseStart'),
                      'OutputActions', ())
         
         sma.addState('Name', 'GratingFlipPause',
                      'Timer', 0.2,
-                     'StateChangeConditions', ('Tup', 'WaitForLick'),
+                     'StateChangeConditions', ('Tup', 'WaitForLick', 'Port2In', 'FalseStart'),
                      'OutputActions',('SoftCode',1))
+        sma.addState('Name', 'FalseStart',
+                     'Timer', 5,
+                     'StateChangeConditions', ('Tup', 'WaitForInit'),
+                     'OutputActions', ('SoftCode', 2))
         
         sma.addState('Name', 'WaitForLick',
                      'Timer', 0,
-                     'StateChangeConditions', ('Port2In', 'RewardLick'),
+                     'StateChangeConditions', ('Port2In', 'RewardLick', 'Port1Out', 'MoveHead'),
                      'OutputActions', ())
+        
+        sma.addState('Name', 'MoveHead',
+                     'Timer', 0.2,
+                     'StateChangeConditions', ('Tup', 'WaitForInit'),
+                     'OutputActions', ('SoftCode', 2))
 
         sma.addState('Name', 'RewardLick',
                  'Timer', CenterValveTime,
-                 'StateChangeConditions', ('Tup', 'WaitForOut'),
-                 'OutputActions', ('ValveState', 2, 'SoftCode', 2))
+                 'StateChangeConditions', ('Tup', 'GreyFlip'),
+                 'OutputActions', ('ValveState', 2))
+        
+        sma.addState('Name', 'GreyFlip',
+                     'Timer', 0,
+                     'StateChangeConditions', ('Tup', 'WaitForOut'),
+                     'OutputActions',('SoftCode', 2))
         
         sma.addState('Name', 'WaitForOut',
                      'Timer', 0,
