@@ -49,8 +49,11 @@ def runProtocol(bpodPort, reportCard):
     import datetime
     import time
     myBpod = BpodObject(bpodPort)
+    myBpod.set_protocol('GratingLick')
     import numpy as np
 
+    myBpod.softCodeHandler.initialize()
+    myBpod.softCodeHandler.drawGrating()
     d = datetime.date.today()
     d.strftime("%b%d_%y")
     # Create a new instance of a Bpod object
@@ -60,7 +63,7 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     rewardAmount = 4
     timeout = 5
-    sessionDurationMinutes = 10
+    sessionDurationMinutes = .25
     
     LeftPort = int(1)
     CenterPort = int(2)
@@ -88,14 +91,30 @@ def runProtocol(bpodPort, reportCard):
     sessionWater = 0
     maxWater = reportCard.maxWater
     waterToday = reportCard.getWaterToday()
+    
 
     startTime = time.time()
     elapsed_time = 0
     
     while elapsed_time < sessionDurationMinutes*60:
+        vptime = 0.001*random.randrange(100, 1400, 10) # generate random pause time between 100 and 1400 ms (10 ms step)
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
+        
+        sma.addState('Name', 'WaitForInit',
+                     'Timer', 1,
+                     'StateChangeConditions', ('Port1In', 'VariablePause', 'Tup', 'VariablePause'),
+                     'OutputActions', ())
+        sma.addState('Name', 'VariablePause',
+                     'Timer', vptime,
+                     'StateChangeConditions', ('Tup', 'GratingFlipPause'),
+                     'OutputActions', ())
+        
+        sma.addState('Name', 'GratingFlipPause',
+                     'Timer', 0.2,
+                     'StateChangeConditions', ('Tup', 'WaitForLick'),
+                     'OutputActions',('SoftCode',1))
         
         sma.addState('Name', 'WaitForLick',
                      'Timer', 0,
@@ -105,7 +124,7 @@ def runProtocol(bpodPort, reportCard):
         sma.addState('Name', 'RewardLick',
                  'Timer', CenterValveTime,
                  'StateChangeConditions', ('Tup', 'WaitForOut'),
-                 'OutputActions', ('ValveState', 2))
+                 'OutputActions', ('ValveState', 2, 'SoftCode', 2))
         
         sma.addState('Name', 'WaitForOut',
                      'Timer', 0,
@@ -120,6 +139,8 @@ def runProtocol(bpodPort, reportCard):
         
         myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
         RawEvents = myBpod.runStateMachine() # Run state machine and return events
+        RawEvents.GratingFlipTime = myBpod.softCodeHandler.gratingFlip
+        RawEvents.GreyFlipTime = myBpod.softCodeHandler.greyFlip
         myBpod.addTrialEvents(RawEvents)
         rawEventsDict = myBpod.structToDict(RawEvents)
         
@@ -138,6 +159,7 @@ def runProtocol(bpodPort, reportCard):
             print('reached maxWater (%d)' % maxWater)
             break
             
+    myBpod.softCodeHandler.close()
     print('Session water:', sessionWater)
     myBpod.updateSettings({'Trial Types':trialTypes})
     myBpod.saveSessionData()

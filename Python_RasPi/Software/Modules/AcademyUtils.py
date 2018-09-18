@@ -51,6 +51,8 @@ def getCalibrationDir():
 
 def getReportCardDir():
     reportCardDir = os.path.join(getDataDir(), 'ReportCards')
+    if not os.path.isdir(reportCardDir):
+        os.mkdir(reportCardDir)
     return reportCardDir
 
 def getRosterPath():

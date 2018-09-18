@@ -1,27 +1,4 @@
-function stru = TestDisplay()
-
-% Clear the workspace and the screen
-sca;
-close all;
-
-% Setup PTB with some default values
-PsychDefaultSetup(2);
-
-% Set the screen number to the external secondary monitor if there is one
-% connected
-screenNumber = max(Screen('Screens'));
-
-% Define black, white and grey
-white = WhiteIndex(screenNumber);
-grey = white / 2;
-
-% Skip sync tests for demo purposes only
-Screen('Preference', 'SkipSyncTests', 2);
-
-% Open the screen
-[window, windowRect] = PsychImaging('OpenWindow', screenNumber, grey, [], 32, 2,...
-    [], [],  kPsychNeed32BPCFloat);
-
+function stru = DrawGabor(window, windowRect)
 
 %--------------------
 % Gabor information
@@ -68,15 +45,7 @@ propertiesMat = [phase, freq, sigma, contrast, aspectRatio, 0, 0, 0];
 Screen('DrawTextures', window, gabortex, [], [], orientation, [], [], [], [],...
     kPsychDontDoRotation, propertiesMat');
 
-% Flip to the screen
-Screen('Flip', window);
 
-% Wait for a button press to exit
-KbWait;
-
-% Clear screen
-sca;
-class(gabortex)
-stru = struct('GaborTex',gabortex);
+stru = struct('Window', window, 'WindowRect', windowRect, 'GaborTex', gabortex);
 return;
 end

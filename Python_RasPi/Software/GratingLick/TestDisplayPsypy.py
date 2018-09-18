@@ -1,4 +1,5 @@
 import sys, os
+import time
 import execnet
 
 def call_python_version(Version, Module, Function, ArgumentList):
@@ -11,9 +12,12 @@ def call_python_version(Version, Module, Function, ArgumentList):
     return channel.receive()
 
 def main():
-    result = call_python_version("2.7", "TestDisplayPy2", "mainTest",  
+    starttime = time.time()
+    drawtime, updatetime = call_python_version("2.7", "TestDisplayPy2", "mainTest",  
                              [])
-    print('result:', result)
+    print('starttime:', starttime)
+    print('drawtime:', drawtime)
+    print('updatetime:', updatetime)
     
 if __name__ == "__main__":
     main()
