@@ -61,9 +61,9 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    rewardAmount = 4
+    rewardAmount = 6
     timeout = 5
-    sessionDurationMinutes = .25
+    sessionDurationMinutes = 5
     
     LeftPort = int(1)
     CenterPort = int(2)
@@ -91,7 +91,7 @@ def runProtocol(bpodPort, reportCard):
     sessionWater = 0
     maxWater = reportCard.maxWater
     waterToday = reportCard.getWaterToday()
-    
+    withdrawal = True
 
     startTime = time.time()
     elapsed_time = 0
@@ -101,11 +101,17 @@ def runProtocol(bpodPort, reportCard):
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
-        
-        sma.addState('Name', 'WaitForInit',
-                     'Timer', 1,
-                     'StateChangeConditions', ('Port1In', 'VariablePause', 'Tup', 'VariablePause'),
+        if withdrawal:
+            sma.addState('Name', 'WaitForInit',
+                     'Timer', 0,
+                     'StateChangeConditions', ('Port1In', 'VariablePause'),
                      'OutputActions', ())
+        else:
+            sma.addState('Name', 'WaitForInit',
+                         'Timer', 0.01,
+                         'StateChangeConditions', ('Tup', 'VariablePause'),
+                         'OutputActions', ())
+            
         sma.addState('Name', 'VariablePause',
                      'Timer', vptime,
                      'StateChangeConditions', ('Tup', 'GratingFlipPause', 'Port1Out', 'WaitForInit', 'Port2In', 'FalseStart'),
@@ -161,6 +167,15 @@ def runProtocol(bpodPort, reportCard):
         #Find reward times to update session water
         rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardLick')
         rewarded = rewardTimes[0][0]>0
+
+        print(myBpod.data.rawEvents.Trial[currentTrial].Events)
+        try:
+            withdrawalTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].Events, 'Port1Out')
+            print('withdrawalTimes:', withdrawalTimes)
+            withdrawal = rewardTimes[0][0]>0
+        except AttributeError:
+            withdrawal = False
+
         
         #if correct and water rewarded, update water and reset streak
         if rewarded:

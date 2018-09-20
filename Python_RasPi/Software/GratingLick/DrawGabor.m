@@ -5,20 +5,25 @@ function stru = DrawGabor(window, windowRect)
 %--------------------
 
 % Dimension of the region where will draw the Gabor in pixels
-gaborDimPix = windowRect(4) / 2;
+pxpercm = 100;
+screenDistance = 20; % distance from eye to screen in cm
+gaborWidthDeg = 16; %radius of grating in degrees
+gaborWidthCm = screenDistance*tand(gaborWidthDeg);
+gaborDimPix = round(pxpercm*gaborWidthCm)
+%gaborDimPix = windowRect(4) / 2
 
 % Sigma of Gaussian
 sigma = gaborDimPix / 7;
 
 % Obvious Parameters
 orientation = 0;
-contrast = 0.8;
+contrast = 1;
 aspectRatio = 1.0;
 phase = 0;
 
 % Spatial Frequency (Cycles Per Pixel)
 % One Cycle = Grey-Black-Grey-White-Grey i.e. One Black and One White Lobe
-numCycles = 5;
+numCycles = 3;
 freq = numCycles / gaborDimPix;
 
 % Build a procedural gabor texture (Note: to get a "standard" Gabor patch
