@@ -80,7 +80,7 @@ while (1)
         end
         [m,count2,msg2] = fscanf(s);
         while (strcmp(msg2, '') == 0)
-            [m,count1,msg2] = fscanf(s);
+            [m,count2,msg2] = fscanf(s);
         end
 
         if (count1 > 5)
@@ -158,7 +158,7 @@ while (1)
         end
         [m,count2,msg2] = fscanf(s);
         while (strcmp(msg2, '') == 0)
-            [m,count1,msg2] = fscanf(s);
+            [m,count2,msg2] = fscanf(s);
         end
 
         if (count1 > 5)
