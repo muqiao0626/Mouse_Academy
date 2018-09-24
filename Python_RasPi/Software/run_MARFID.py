@@ -123,8 +123,6 @@ def main():
             passedTrainingDoor = False
             while not passedTrainingDoor:
                 globalVars['tag3'] = MegaCom.readTag(globalVars['megaSer'], 3)
-                
-                print(globalVars['tag3'])
                 time.sleep(0.1)
                 globalVars['read3'] = MegaCom.isTag(globalVars['tag3'])
                 if globalVars['read3']:
@@ -183,14 +181,14 @@ def main():
                                 MegaCom.openDoor(globalVars['megaSer'], 1)
                             except MegaCom.ServoError:
                                 globalVars['megaSer'] = MegaCom.resetMega()
-                            returnedHome = False
-                            while not returnedHome:
-                                time.sleep(0.1)
-                                globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
-                                if MegaCom.isTag(globalVars['tag1']) and tracking==tagIDtoSubject["id"][globalVars['tag1']]["mouseID"]:
-                                    returnedHome = True
-                                    buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
-                                    print("mouse %s returned to home cage" % tracking)
+##                            returnedHome = False
+##                            while not returnedHome:
+##                                time.sleep(0.1)
+##                                globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
+##                                if MegaCom.isTag(globalVars['tag1']) and tracking==tagIDtoSubject["id"][globalVars['tag1']]["mouseID"]:
+##                                    returnedHome = True
+##                                    buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
+##                                    print("mouse %s returned to home cage" % tracking)
             elapsed_time = time.time()-startTime
     
 
