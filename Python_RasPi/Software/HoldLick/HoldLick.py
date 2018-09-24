@@ -60,7 +60,7 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     rewardAmount = 6
     timeout = 5
-    sessionDurationMinutes = 10
+    sessionDurationMinutes = 15
     
     LeftPort = int(1)
     CenterPort = int(2)
@@ -76,7 +76,7 @@ def runProtocol(bpodPort, reportCard):
     CenterPortBin = 2
     RightPortBin = 4
     trialTypes = []
-    holdTime = 1
+    holdTime = 0.4
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "HoldTime": holdTime,
                            "Session Duration (min)": sessionDurationMinutes})

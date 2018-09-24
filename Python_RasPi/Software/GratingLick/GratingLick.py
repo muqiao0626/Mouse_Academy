@@ -63,7 +63,7 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     rewardAmount = 6
     timeout = 5
-    sessionDurationMinutes = 5
+    sessionDurationMinutes = .1
     
     LeftPort = int(1)
     CenterPort = int(2)

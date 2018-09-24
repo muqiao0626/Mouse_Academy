@@ -9,13 +9,16 @@ const int FSR_PIN2 = A1; // Pin connected to FSR/resistor divider
 const float VCC = 5; // Measured voltage of Ardunio 5V line
 const float R_DIV = 3300.0; // Measured resistance of 3.3k resistor
 
-const int highWrite = 170;
-const int lowWrite = 5;
+const int closeWrite = 163;
+const int openWrite = 120;
+const int tag1InRangePin = 52;
 
 const char readCompleteMsg[18] = "read tag complete";
 const char openMsg[19] = "open door complete";
 const char closeMsg[20] = "close door complete";
 const char obstructMsg[24] = "obstruction encountered";
+const char trueMsg[5] = "True";
+const char falseMsg[6] = "False";
 int idLen = 12;
 
 char currentTag[13] = "000000000000";
@@ -27,12 +30,19 @@ int RFIDResetPin1 = 11;
 int RFIDResetPin2 = 12;
 int RFIDResetPin3 = 13;
 
+boolean tir1 = false;
 char tag1[13];
 char tag2[13];
 char tag3[13];
 float fsrForce;
 
-const char blankTag[13] = "000000000000";
+char blankTag[13] = "000000000000";
+
+void clearCurrentTag() {
+  for (int i = 0; i < 13; i++) {
+    currentTag[i] = '0';
+  }
+}
 void setTag1(char newTag[13]) {
   for (int i = 0; i < 13; i++) {
     tag1[i] = newTag[i];
@@ -58,6 +68,7 @@ void setup() {
   setTag1(blankTag);
   setTag2(blankTag);
   setTag3(blankTag);
+  pinMode(tag1InRangePin, INPUT);
   //reset RFID readers
   pinMode(RFIDResetPin1, INPUT);
   //digitalWrite(RFIDResetPin1, HIGH);
@@ -73,7 +84,7 @@ void setup() {
   delay(50);
   //openDoor(servo1, 1);
   //delay(50);
-  servo2.attach(servoPin2, 500, 2000);
+  servo2.attach(servoPin2, 500, 2100);
   delay(50);
   //closeDoor(servo2, 2);
   //delay(50);
@@ -136,20 +147,34 @@ void loop() {
         }
       }
     }
+    else if (commandRead == '9') {
+      if (idRead == '0') {
+      
+        tag1InRange();
+        if (tir1 == true){
+        Serial.println(trueMsg);
+        }
+        else{
+          Serial.println(falseMsg);
+        }
+    }
 
   }
   delay(10);
+}
 }
 
 
 
 
-
+void tag1InRange(){
+  tir1 = (digitalRead(tag1InRangePin) == LOW);
+}
 
 
 // READ A TAG FROM A SINGLE RFID READER
 void readTag(int tagNum) {
-  currentTag[13] = "000000000000";
+  clearCurrentTag();
   HardwareSerial* serPointer;
    int address;
 
@@ -211,9 +236,9 @@ int closeDoor(Servo servo, int servonum) {
   float forceInit = fsrForce;
   float forceNow;
   //don't bother checking force at beginning and end
-  for (int theta = pos; theta < highWrite - 6; theta += 6) {
+  for (int theta = pos; theta < closeWrite - 6; theta += 6) {
 
-    if (theta < lowWrite + 6 || theta > highWrite - 6) {
+    if (theta < openWrite + 6 || theta > closeWrite - 6) {
       servo.write(theta);
       delay(5);
       closed = 1;
@@ -224,18 +249,18 @@ int closeDoor(Servo servo, int servonum) {
     else {
       servo.write(theta);
       delay(5);
-      currentForce(servonum);
-      forceNow = fsrForce - forceInit;
-      if (forceNow > 10.0) {
-        //reopen door
-        servo.write(lowWrite);
-        //print serial message that close door failed
-        Serial.println(obstructMsg);
-        //Serial.print(forceInit);
-       // Serial.print(" forceNow: ");
-        //Serial.println(forceNow);
-        return 0;
-      }
+//      currentForce(servonum);
+//      forceNow = fsrForce - forceInit;
+//      if (forceNow > 10.0) {
+//        //reopen door
+//        servo.write(openWrite);
+//        //print serial message that close door failed
+//        Serial.println(obstructMsg);
+//        //Serial.print(forceInit);
+//       // Serial.print(" forceNow: ");
+//        //Serial.println(forceNow);
+//        return 0;
+//      }
     }
   }
   //Serial.print("initForce ");
@@ -245,7 +270,7 @@ int closeDoor(Servo servo, int servonum) {
 
 void openDoor(Servo servo) {
   int pos = servo.read();
-  for (int theta = pos; theta > lowWrite + 3; theta -= 3) {
+  for (int theta = pos; theta > openWrite + 3; theta -= 3) {
     servo.write(theta);
     delay(15);
   }

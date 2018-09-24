@@ -84,6 +84,10 @@ def main():
     idIn = ""
 
     MegaCom.openDoor(globalVars['megaSer'], 1)
+    try:
+        MegaCom.closeDoor(globalVars['megaSer'], 2)
+    except:
+        print('door 2 failed to close')
     MegaCom.closeDoor(globalVars['megaSer'], 2)
     while elapsed_time < 6*3600:
     #try readers 1 and 2 for tag
@@ -105,6 +109,8 @@ def main():
             if not reportCards[tracking].trainingAllowed:
                 print("Mouse %s not permitted to train." % tracking)
                 continue
+            if MegaCom.tag1InRange(globalVars['megaSer']):
+                continue
             print("Mouse %s passed checkpoint." % tracking)
             try:
                 MegaCom.closeDoor(globalVars['megaSer'], 1)
@@ -117,6 +123,8 @@ def main():
             passedTrainingDoor = False
             while not passedTrainingDoor:
                 globalVars['tag3'] = MegaCom.readTag(globalVars['megaSer'], 3)
+                
+                print(globalVars['tag3'])
                 time.sleep(0.1)
                 globalVars['read3'] = MegaCom.isTag(globalVars['tag3'])
                 if globalVars['read3']:

@@ -69,7 +69,7 @@ def checkRecording(ser):
             startEndStr = startEndBytes.decode()
             [startStr, endStr] = startEndStr.split(', ')
         except Exception as e:
-            raise OpenMVEror('Error: unable to parse end of recording message from OpenMV Cam:\n%s' %e)
+            raise OpenMVError('Error: unable to parse end of recording message from OpenMV Cam:\n%s' %startEndStr)
         
         actualStartTime = int(startStr)
         endTime = int(endStr)

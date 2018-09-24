@@ -168,6 +168,17 @@ def openDoor(megaSer, servoNum):
             door2open = True
         else:
             raise MegaComError('Error: servoNum must be 1 or 2.')
+        
+#write two-byte code for checking if mouse at reader 1
+def tag1InRange(megaSer):
+    commandStr = '90' 
+    megaSer.write(commandStr.encode())
+    time.sleep(0.005)
+    msgstr = megaSer.readline().decode()
+    try:
+        tir1 = "false" not in msgstr.lower()
+    except:
+        raise MegaComError('tag1InRange failed, message: %s' % msgstr)
     
 #write two-byte coe for operating servo to close door
 def closeDoor(megaSer, servoNum):

@@ -93,7 +93,7 @@ def testEnrollment():
     return enrollmentSuccessful
         
 def testRecord():
-    import OpenMV.OpenMVCom as OpenMVCom
+    import Modules.OpenMVCom as OpenMVCom
     movSecs = 3
     camSer, connected = OpenMVCom.connect()
     print('Connected:', connected)

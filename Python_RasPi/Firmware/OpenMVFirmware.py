@@ -1,5 +1,5 @@
 '''
-Copyright (C) 2018 Meister Lab at Caltech 
+Copyright (C) 2018 Meister Lab at Caltech
 -----------------------------------------------------
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -43,11 +43,11 @@ while(True):
     nBytes = 13
     # end of initialization code
     ##############################
-    
+
     while connected:
         ###########################
         # Check serial buffer until
-        # a unix time is read. 
+        # a unix time is read.
         connected = usb_vcp.isconnected()
         # READ unix time from computer
         compTimeRead = False
@@ -55,17 +55,17 @@ while(True):
         byteIndex = 0
         clock = time.clock() # Tracks FPS.
         ###############################
-        
+
         while not compTimeRead:
             bytesRead = usb_vcp.recv(compTimeBuff, timeout=1)
             if bytesRead == nBytes:
                 compTimeRead = True
                 readTime = pyb.micros()
-                
+
         ######################################
         # Time has been read. Parse to string
         # to name movie folder.
-        
+
         compTimeFmt = "<" + str(nBytes) + "s"
         compTimePack = struct.unpack(compTimeFmt, compTimeBuff)
         compTimeStr = compTimePack[0].decode()
@@ -73,14 +73,14 @@ while(True):
         mjpegname = ''.join([compTimeStr, '.mjpeg'])
 
         # Turn on red LED to indicate frame capture.
-        pyb.LED(RED_LED_PIN).on()
+        #pyb.LED(RED_LED_PIN).on()
 
         os.mkdir(compTimeStr)
         f = open(''.join([compTimeStr, '/', compTimeStr, '.txt']), 'w')
         endRead = False
         endReadBuff = bytearray(4)
         recordTime = pyb.micros()
-        
+
         # Find time elapsed since start signal was read.
         recordLatency = pyb.elapsed_micros(readTime)
         i = 0
