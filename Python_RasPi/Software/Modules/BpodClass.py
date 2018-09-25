@@ -95,8 +95,8 @@ class BpodObject(object):
     def set_subject(self, subStr):
         self.subject = subStr
         self.updateCurrentDataFolder()
-        self.updateCurrentDataFile()
         self.updateSession()
+        self.updateCurrentDataFile()
         from ReportCardClass import ReportCard
         rc = ReportCard(self.subject)
         self.protocol = rc.currentProtocol
