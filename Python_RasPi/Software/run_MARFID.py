@@ -51,6 +51,10 @@ def main():
             subject = input('"%s" not enrolled.\nName of subject %d? ' %(subject, sub))
             
         rc = ReportCard(subject)
+        
+        if rc.getWaterToday()<rc.maxWater:
+            rc.trainingAllowed = True
+        rc.save()
         yn = input('Current protocol for "%s" is "%s". Change protocol? (y/n)' %(subject, rc.currentProtocol))
         if yn.lower()=='y' or yn.lower()=='n':
             ynGood = True
@@ -60,6 +64,7 @@ def main():
             yn = input('Current protocol for "%s" is "%s". Change protocol? (y/n)' %(subject, rc.currentProtocol))
             if yn.lower()=='y' or yn.lower()=='n':
                 ynGood = True
+                
         if yn=='y':
             protInp = input('Enter new protocol for "%s": ' %subject)
             print('Setting protocol for %s to %s.' %(subject, protInp))

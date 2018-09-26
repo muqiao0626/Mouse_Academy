@@ -32,7 +32,7 @@ import importlib
 
 class BpodObject(object):
     def __init__(self, serialPortName):
-        self.initTime = datetime.datetime.now()
+        self.initTime = time.time()
         self.connectTime = 0
         self.sentDateTime = 0
         self.serialObject = 0
@@ -64,7 +64,7 @@ class BpodObject(object):
         self.remoteDataFolder = "C:\Data"
         self.currentDataFolder = os.path.join(self.dataFolder, self.subject, self.protocol, 'Session Data')
         self.session = 1
-        self.currentDataFile = '%s_%s_%s_Session%d.json' % (self.subject, self.protocol, self.date, self.session)
+        self.currentDataFile = '%s_%s_%d.json' % (self.subject, self.protocol, self.initTime)
         self.stateMachine = Struct()
         self.modules = Struct()
         self.status = Struct();
@@ -77,7 +77,7 @@ class BpodObject(object):
     def updateSettings(self, data):
         self.settings.update(data)
     def updateCurrentDataFile(self):
-        dataFile = '%s_%s_%s_Session%d.json' % (self.subject, self.protocol, self.date, self.session)
+        dataFile = '%s_%s_%d.json' % (self.subject, self.protocol, self.initTime)
         self.currentDataFile = dataFile
         return dataFile
     def updateCurrentDataFolder(self):
@@ -86,16 +86,9 @@ class BpodObject(object):
         if not os.path.exists(df):
             os.makedirs(df)
         return self.currentDataFolder
-    def updateSession(self):
-        oldSession = os.path.exists(os.path.join(self.currentDataFolder, self.currentDataFile))
-        while oldSession:
-            self.session = self.session + 1
-            dataFile = self.updateCurrentDataFile()
-            oldSession = os.path.exists(os.path.join(self.currentDataFolder, dataFile))
     def set_subject(self, subStr):
         self.subject = subStr
         self.updateCurrentDataFolder()
-        self.updateSession()
         self.updateCurrentDataFile()
         from ReportCardClass import ReportCard
         rc = ReportCard(self.subject)
