@@ -52,8 +52,6 @@ def runProtocol(bpodPort, reportCard):
     myBpod.set_protocol('GratingLick')
     import numpy as np
 
-    myBpod.softCodeHandler.initialize()
-    myBpod.softCodeHandler.drawGrating()
     d = datetime.date.today()
     d.strftime("%b%d_%y")
     # Create a new instance of a Bpod object
@@ -63,7 +61,7 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     rewardAmount = 6
     timeout = 5
-    sessionDurationMinutes = .1
+    sessionDurationMinutes = .5
     
     LeftPort = int(1)
     CenterPort = int(2)
@@ -97,7 +95,7 @@ def runProtocol(bpodPort, reportCard):
     elapsed_time = 0
     
     while elapsed_time < sessionDurationMinutes*60:
-        vptime = 0.001*random.randrange(100, 1400, 10) # generate random pause time between 100 and 1400 ms (10 ms step)
+        vptime = 0.001*random.randrange(400, 600, 10) # generate random pause time between 100 and 1400 ms (10 ms step)
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
@@ -114,45 +112,29 @@ def runProtocol(bpodPort, reportCard):
             
         sma.addState('Name', 'VariablePause',
                      'Timer', vptime,
-                     'StateChangeConditions', ('Tup', 'GratingFlipPause', 'Port1Out', 'WaitForInit', 'Port2In', 'FalseStart'),
+                     'StateChangeConditions', ('Tup', 'WaitForLick', 'Port1Out', 'WaitForInit', 'Port2In', 'FalseStart'),
                      'OutputActions', ())
         
-        sma.addState('Name', 'GratingFlipPause',
-                     'Timer', 0.2,
-                     'StateChangeConditions', ('Tup', 'WaitForLick', 'Port2In', 'FalseStart'),
-                     'OutputActions',('SoftCode',1))
         sma.addState('Name', 'FalseStart',
-                     'Timer', 5,
-                     'StateChangeConditions', ('Tup', 'WaitForInit'),
-                     'OutputActions', ('SoftCode', 2))
+                     'Timer', 0.2,
+                     'StateChangeConditions', ('Port2In', 'FalseStart', 'Port2Out', 'VariablePause', 'Port1In', 'VariablePause'),
+                     'OutputActions', ('SoftCode', 3))
         
         sma.addState('Name', 'WaitForLick',
                      'Timer', 0,
-                     'StateChangeConditions', ('Port2In', 'RewardLick', 'Port1Out', 'MoveHead'),
-                     'OutputActions', ())
-        
-        sma.addState('Name', 'MoveHead',
-                     'Timer', 0.2,
-                     'StateChangeConditions', ('Tup', 'WaitForInit'),
-                     'OutputActions', ('SoftCode', 2))
+                     'StateChangeConditions', ('Port2In', 'RewardLick', 'Port1Out', 'FalseStart'),
+                     'OutputActions', ('SoftCode', 1))
 
         sma.addState('Name', 'RewardLick',
                  'Timer', CenterValveTime,
-                 'StateChangeConditions', ('Tup', 'GreyFlip'),
-                 'OutputActions', ('ValveState', 2))
-        
-        sma.addState('Name', 'GreyFlip',
-                     'Timer', 0,
-                     'StateChangeConditions', ('Tup', 'WaitForOut'),
-                     'OutputActions',('SoftCode', 2))
-        
-        sma.addState('Name', 'WaitForOut',
-                     'Timer', 0,
-                     'StateChangeConditions', ('Port2Out', 'ExitPause'),
+                 'StateChangeConditions', ('Tup', 'Drinking'),
+                 'OutputActions', ('ValveState', 2, 'SoftCode', 2))
+        sma.addState('Name', 'Drinking',
+                     'Timer', 0.8,
+                     'StateChangeConditions', ('Tup', 'exit', 'Port2In', 'Drinking', 'Port1Out', 'Withdrawal'),
                      'OutputActions', ())
-        
-        sma.addState('Name', 'ExitPause',
-                     'Timer', exitPauseTime,
+        sma.addState('Name', 'Withdrawal',
+                     'Timer', 0,
                      'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ())
     
@@ -170,9 +152,8 @@ def runProtocol(bpodPort, reportCard):
 
         print(myBpod.data.rawEvents.Trial[currentTrial].Events)
         try:
-            withdrawalTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].Events, 'Port1Out')
-            print('withdrawalTimes:', withdrawalTimes)
-            withdrawal = rewardTimes[0][0]>0
+            withdrawalTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'Withdrawal')
+            withdrawal = withdrawalTimes[0][0]>0
         except AttributeError:
             withdrawal = False
 

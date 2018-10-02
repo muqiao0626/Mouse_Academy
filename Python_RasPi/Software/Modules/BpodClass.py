@@ -100,10 +100,13 @@ class BpodObject(object):
         self.protocol = protStr
         self.updateCurrentDataFolder()
         self.updateCurrentDataFile()
-        protocolFolder = importlib.import_module(protStr, package=None)
+        protocolFolder = os.path.join(AcademyUtils.getSoftwareDir(), protStr)
+        sys.path.append(protocolFolder)
+        protocolMod = importlib.import_module(protStr)
+        print('Protocol Module:', protocolMod)
         try:
             softCodeHandlerStr = "SoftCodeHandler_" + self.protocol
-            self.softCodeMod = importlib.import_module('%s.%s' % (protStr, softCodeHandlerStr))
+            self.softCodeMod = importlib.import_module(softCodeHandlerStr, package=protStr)
         except Exception as e:
             self.disconnect()
             print(e)
