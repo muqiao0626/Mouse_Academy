@@ -1,0 +1,1 @@
+From the Modules directory, run Enrollment.py to scan RFID tags and save tag IDs to file.
