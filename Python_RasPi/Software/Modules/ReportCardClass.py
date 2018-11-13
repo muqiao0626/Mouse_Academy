@@ -133,7 +133,8 @@ class ReportCard():
                             'performance': self.performance,
                             'maxWater': self.maxWater,
                             'currentWeight': self.currentWeight,
-                            'trainingAllowed': self.trainingAllowed
+                            'trainingAllowed': self.trainingAllowed,
+                            'tagID':self.tagID
                             })
         with open(self.reportCardFile, 'w') as f:
             jsonStr = json.dumps(self.report, sort_keys=True, indent=4, separators=(',', ': '), default=AcademyUtils.json_serial)

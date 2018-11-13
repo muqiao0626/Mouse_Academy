@@ -21,8 +21,8 @@ import importlib
 
 class SoftCodeHandler(object):
     def __init__(self):
-        self.gratingFlip = []
-        self.greyFlip = []
+        self.patchFlip = []
+        self.blackFlip = []
         self.pg = importlib.import_module('pygame')
         self.pg.init()
         self.screenWidth = 1920
@@ -30,38 +30,45 @@ class SoftCodeHandler(object):
         self.screen = self.pg.display.set_mode((self.screenWidth, self.screenHeight), self.pg.NOFRAME)
         self.background = self.pg.Surface(self.screen.get_size())
         self.background = self.background.convert()
-        self.background.fill((128, 128, 128))
+        self.background.fill((0, 0, 0))
         self.screen.blit(self.background,(0,0))
         self.pg.display.flip()
         
         
-        self.gratingRect = self.pg.Rect((0,0),(self.screenWidth, self.screenHeight))
-        self.gratingIm = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingLick/gratingIms/grating_rot=-30degrees_period=05_size=15_xoffset=+000_yoffset=+000.jpg")
-        self.gratingIm = self.pg.transform.scale(self.gratingIm, self.gratingRect.size)
-        self.gratingIm = self.gratingIm.convert()
+        self.patchRect = self.pg.Rect((0,0),(self.screenWidth, self.screenHeight))
+        self.patchIm = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/PatchLick/patch_size=25_xoffset=+000_yoffset=+000.jpg")
+        self.patchIm = self.pg.transform.scale(self.patchIm, self.patchRect.size)
+        self.patchIm = self.patchIm.convert()
         
-        self.drawGrating()
+        self.drawPatch()
 
         
-    def drawGrey(self):
+    def drawBlack(self):
         self.screen.blit(self.background,(0,0))
-    def drawGrating(self):
-        self.screen.blit(self.gratingIm, self.gratingRect)
+        
+    def drawPatch(self):
+        self.screen.blit(self.patchIm, self.patchRect)
         
     def clearFlipTimes(self):
-        self.gratingFlip = []
-        self.greyFlip = []
+        self.patchFlip = []
+        self.blackFlip = []
 
     def handleSoftCode(self, byte):
 
-        if byte==1: #to show grating after hold
-            self.drawGrating()
+        if byte==1: #to show patch after hold
+            startTime = time.time()
+            self.drawPatch()
             self.pg.display.flip()
-            self.gratingFlip = self.gratingFlip + [time.time()]
-        elif byte==2: #to show grey after lick
-            self.drawGrey()
+            completeTime = time.time()
+            self.patchFlip = self.patchFlip + [completeTime]
+            print('Delay:', completeTime - startTime)
+        elif byte==2: #to show black after lick
+            startTime = time.time()
+            self.drawBlack()
             self.pg.display.flip()
-            self.greyFlip = self.greyFlip + [time.time()]
+            completeTime = time.time()
+            self.blackFlip = self.blackFlip + [completeTime]
+            print('Delay:', completeTime - startTime)
             
         
     def close(self):

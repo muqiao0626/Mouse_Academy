@@ -51,6 +51,8 @@ def main():
             subject = input('"%s" not enrolled.\nName of subject %d? ' %(subject, sub))
             
         rc = ReportCard(subject)
+        rc.tagID = subToTag[subject]
+        print(subject + ':', rc.tagID)
         
         if rc.getWaterToday()<rc.maxWater:
             rc.trainingAllowed = True
@@ -80,8 +82,13 @@ def main():
         
     startTime = time.time()
     elapsed_time = 0
-
-    camSer, connected = OpenMVCom.connect()
+    
+    try:
+        camSer, connected = OpenMVCom.connect()
+    except AcademyUtils.DeviceError as e:
+        print(e)
+        connected = False
+        
     if connected:
         print("Successful connection to OpenMV cam.")
     else:
@@ -94,7 +101,7 @@ def main():
     except:
         print('door 2 failed to close')
     MegaCom.closeDoor(globalVars['megaSer'], 2)
-    while elapsed_time < 6*3600:
+    while elapsed_time < 9*3600:
     #try readers 1 and 2 for tag
         tracking = None
         globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
@@ -111,38 +118,51 @@ def main():
         else: #wait for mouse to pass
             #find which mouse we're keeping track of
             tracking = tagIDtoSubject["id"][globalVars['tag2']]["mouseID"]
+            #if animal is not allowed to train, wait for
+            #animal to return to home cage, then clear buffers
             if not reportCards[tracking].trainingAllowed:
                 print("Mouse %s not permitted to train." % tracking)
-                continue
-            if MegaCom.tag1InRange(globalVars['megaSer']):
-                continue
-            print("Mouse %s passed checkpoint." % tracking)
-            try:
-                MegaCom.closeDoor(globalVars['megaSer'], 1)
-            except MegaCom.ServoError as e:
-                print("Door unable to close. Resetting reader buffers.")
-                buff1 = MegaCom.clearBuffer(globalVars['megaSer'], 1)
-                buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
-                continue
-            MegaCom.openDoor(globalVars['megaSer'], 2)
-            passedTrainingDoor = False
-            while not passedTrainingDoor:
-                globalVars['tag3'] = MegaCom.readTag(globalVars['megaSer'], 3)
-                time.sleep(0.1)
-                globalVars['read3'] = MegaCom.isTag(globalVars['tag3'])
-                if globalVars['read3']:
+                returnedHome = False
+                while not returnedHome:
+                    globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
+                    time.sleep(0.05)
+                    globalVars['read1'] = MegaCom.isTag(globalVars['tag1'])
+                    if globalVars['read1']:
+                        if globalVars['tag1']==reportCards[tracking].tagID:
+                            returnedHome = True
+                            print('Mouse %s returned to home cage' % tracking)
+                            buff1 = MegaCom.clearBuffer(globalVars['megaSer'], 1)
+                            buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
+            #if animal is allowed to train:
+            else:            
+                if not MegaCom.tag1InRange(globalVars['megaSer']):
+                    print("Mouse %s passed checkpoint." % tracking)
                     try:
-                        MegaCom.closeDoor(globalVars['megaSer'], 2)
-                        passedTrainingDoor = True
-                        print("Mouse %s began training." % tracking)
+                        MegaCom.closeDoor(globalVars['megaSer'], 1)
                     except MegaCom.ServoError as e:
-                        print("Unable to close door 2.")
-                        passedTrainingDoor = False
+                        print("Door unable to close. Resetting reader buffers.")
+                        buff1 = MegaCom.clearBuffer(globalVars['megaSer'], 1)
+                        buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
                         continue
+                    MegaCom.openDoor(globalVars['megaSer'], 2)
+                    passedTrainingDoor = False
+                    while not passedTrainingDoor:
+                        globalVars['tag3'] = MegaCom.readTag(globalVars['megaSer'], 3)
+                        time.sleep(0.1)
+                        globalVars['read3'] = MegaCom.isTag(globalVars['tag3'])
+                        if globalVars['read3']:
+                            try:
+                                MegaCom.closeDoor(globalVars['megaSer'], 2)
+                                passedTrainingDoor = True
+                                print("Mouse %s began training." % tracking)
+                            except MegaCom.ServoError as e:
+                                print("Unable to close door 2.")
+                                passedTrainingDoor = False
+                                continue
                     try:
                         compTimeObj = OpenMVCom.startRecording(camSer)
-                    except serial.serialutil.SerialException:
-                        print('SerialException: OpenMV cam not connected.')
+                    except Exception as e:
+                        print('SerialException: OpenMV cam not connected.', e)
                     protocol = reportCards[tracking].currentProtocol
                     protocolModule = importlib.import_module('%s.%s' %(protocol,protocol))
                     print('%s beginning protocol "%s"' %(tracking, protocol))
@@ -153,7 +173,7 @@ def main():
                         AcademyUtils.resetBpodPort()
                     try:
                         actualStartTimeObj, endTimeObj, dur = OpenMVCom.stopRecording(camSer)
-                    except OpenMVCom.OpenMVError as e:
+                    except Exception as e:
                         print('Camera failure:\n%s' %e)
                     #clear buffer 2 so we can read when
                     #training mouse passes reader 2
@@ -186,14 +206,14 @@ def main():
                                 MegaCom.openDoor(globalVars['megaSer'], 1)
                             except MegaCom.ServoError:
                                 globalVars['megaSer'] = MegaCom.resetMega()
-##                            returnedHome = False
-##                            while not returnedHome:
-##                                time.sleep(0.1)
-##                                globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
-##                                if MegaCom.isTag(globalVars['tag1']) and tracking==tagIDtoSubject["id"][globalVars['tag1']]["mouseID"]:
-##                                    returnedHome = True
-##                                    buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
-##                                    print("mouse %s returned to home cage" % tracking)
+                            returnedHome = False
+                            while not returnedHome:
+                                time.sleep(0.1)
+                                globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
+                                if MegaCom.isTag(globalVars['tag1']) and tracking==tagIDtoSubject["id"][globalVars['tag1']]["mouseID"]:
+                                    returnedHome = True
+                                    buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
+                                    print("mouse %s returned to home cage" % tracking)
             elapsed_time = time.time()-startTime
     
 

@@ -61,16 +61,16 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     rewardAmount = 6
     timeout = 5
-    sessionDurationMinutes = .5
+    sessionDurationMinutes = 20
+    responseWindow = 700#in ms
+    responseWindowSecs = 0.001*responseWindow
     
     LeftPort = int(1)
     CenterPort = int(2)
     RightPort = int(3)
-    valveTimes = myBpod.getValveTimes(rewardAmount, [1, 2, 3])
+    valveTimes = myBpod.getValveTimes(rewardAmount, [2])
 
-    LeftValveTime = valveTimes[0]
-    RightValveTime = valveTimes[2]
-    CenterValveTime = valveTimes[1]
+    CenterValveTime = valveTimes[0]
 
     LeftLED = 'PWM%d' % LeftPort
     CenterLED = 'PWM%d' % CenterPort
@@ -81,6 +81,7 @@ def runProtocol(bpodPort, reportCard):
     trialTypes = []
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Timeout": timeout,
+                           "Response Window": responseWindow,
                            "Session Duration (min)": sessionDurationMinutes})
     
     currentTrial = 0
@@ -95,34 +96,35 @@ def runProtocol(bpodPort, reportCard):
     elapsed_time = 0
     
     while elapsed_time < sessionDurationMinutes*60:
-        vptime = 0.001*random.randrange(400, 600, 10) # generate random pause time between 100 and 1400 ms (10 ms step)
+        vptime = 0.001*random.randrange(400, 1000, 10) # generate random pause time between 100 and 1400 ms (10 ms step)
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
         if withdrawal:
+            vptime = vptime + 1 #penalty for withdrawal
             sma.addState('Name', 'WaitForInit',
                      'Timer', 0,
-                     'StateChangeConditions', ('Port1In', 'VariablePause'),
+                     'StateChangeConditions', ('Port1In', 'VariablePause', 'Port1Out', 'Withdrawal'),
                      'OutputActions', ())
         else:
             sma.addState('Name', 'WaitForInit',
                          'Timer', 0.01,
-                         'StateChangeConditions', ('Tup', 'VariablePause'),
+                         'StateChangeConditions', ('Tup', 'VariablePause', 'Port1Out', 'Withdrawal'),
                          'OutputActions', ())
             
         sma.addState('Name', 'VariablePause',
                      'Timer', vptime,
-                     'StateChangeConditions', ('Tup', 'WaitForLick', 'Port1Out', 'WaitForInit', 'Port2In', 'FalseStart'),
+                     'StateChangeConditions', ('Tup', 'WaitForLick', 'Port1Out', 'Withdrawal', 'Port2In', 'FalseStart'),
                      'OutputActions', ())
         
         sma.addState('Name', 'FalseStart',
-                     'Timer', 0.2,
-                     'StateChangeConditions', ('Port2In', 'FalseStart', 'Port2Out', 'VariablePause', 'Port1In', 'VariablePause'),
-                     'OutputActions', ('SoftCode', 3))
+                     'Timer', timeout,
+                     'StateChangeConditions', ('Port2In', 'FalseStart', 'Port2Out', 'VariablePause', 'Port1In', 'VariablePause', 'Port1Out', 'WaitForInit'),
+                     'OutputActions', ('SoftCode', 2))
         
         sma.addState('Name', 'WaitForLick',
-                     'Timer', 0,
-                     'StateChangeConditions', ('Port2In', 'RewardLick', 'Port1Out', 'FalseStart'),
+                     'Timer', responseWindowSecs,
+                     'StateChangeConditions', ('Port2In', 'RewardLick', 'Port1Out', 'Withdrawal', 'Tup', 'Miss'),
                      'OutputActions', ('SoftCode', 1))
 
         sma.addState('Name', 'RewardLick',
@@ -133,18 +135,25 @@ def runProtocol(bpodPort, reportCard):
                      'Timer', 0.8,
                      'StateChangeConditions', ('Tup', 'exit', 'Port2In', 'Drinking', 'Port1Out', 'Withdrawal'),
                      'OutputActions', ())
+        sma.addState('Name', 'Miss',
+                     'Timer', timeout,
+                     'StateChangeConditions', ('Tup', 'exit', 'Port1Out', 'Withdrawal'),
+                     'OutputActions', ('SoftCode', 2))
         sma.addState('Name', 'Withdrawal',
                      'Timer', 0,
                      'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ())
+                     'OutputActions', ('SoftCode', 2))
     
         
         myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
         RawEvents = myBpod.runStateMachine() # Run state machine and return events
-        RawEvents.GratingFlipTime = myBpod.softCodeHandler.gratingFlip
-        RawEvents.GreyFlipTime = myBpod.softCodeHandler.greyFlip
+        RawEvents.GratingFlipTime = []
+        RawEvents.GratingFlipTime.append(myBpod.softCodeHandler.gratingFlip)
+        RawEvents.GreyFlipTime = []
+        RawEvents.GreyFlipTime.append(myBpod.softCodeHandler.greyFlip)
         myBpod.addTrialEvents(RawEvents)
         rawEventsDict = myBpod.structToDict(RawEvents)
+        myBpod.softCodeHandler.clearFlipTimes()
         
         #Find reward times to update session water
         rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardLick')
