@@ -1,1 +1,7 @@
-From the Modules directory, run Enrollment.py to scan RFID tags and save tag IDs to file.
+1) Activate python 3.5 environment with the command ~$ source activate py35
+2) From the Modules directory, run Enrollment.py to scan RFID tags and save tag IDs to file.
+3) Valves dispense precise amounts of fluid by opening for a specific amount of time. From Software directory, run:
+~$ python Calibrate/Calibrate.py <valve number> <pulse duration> <number of pulses>
+For instance, to add a calibration point of 30 ms for valve 1 with 200 pulses, run command:
+~$ python Calibrate/Calibrate.py 1 30 200
+then enter the amount of water dispensed when prompted. Use at least 3 calibration points. Calibration curves are saved in the 'Calibrate' folder.
