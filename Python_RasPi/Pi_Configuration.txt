@@ -32,8 +32,7 @@ a) Octave
 1. sudo apt-get install octave
 b) PTB
 1. http://neuro.debian.net/install_pkg.html?p=octave-psychtoolbox-3
-2. **did not install neuro debian
-3. sudo apt-get install octave-psychtoolbox-3
+2. sudo apt-get install octave-psychtoolbox-3
 c) oct2py
 1. pip install setuptools
 2. pip install oct2py -I
