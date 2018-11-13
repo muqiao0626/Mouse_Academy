@@ -1,6 +1,8 @@
 1) Activate python 3.5 environment with the command ~$ source activate py35
-2) From the Modules directory, run Enrollment.py to scan RFID tags and save tag IDs to file.
-3) Valves dispense precise amounts of fluid by opening for a specific amount of time. From Software directory, run:
+2) From the 'Software' directory, run ~$ python appendPath.py to add Mouse_Academy subfolders to the python search path.
+3) Run ~$ python SoftwareTests.py to verify setup.
+4) From the 'Modules' directory, run Enrollment.py to scan RFID tags and save tag IDs to file.
+5) Valves dispense precise amounts of fluid by opening for a specific amount of time. From Software directory, run:
 ~$ python Calibrate/Calibrate.py <valve number> <pulse duration> <number of pulses>
 For instance, to add a calibration point of 30 ms for valve 1 with 200 pulses, run command:
 ~$ python Calibrate/Calibrate.py 1 30 200
