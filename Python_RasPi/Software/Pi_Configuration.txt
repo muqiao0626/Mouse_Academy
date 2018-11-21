@@ -1,0 +1,56 @@
+Raspberry pi configuration
+Sarah Sam 08/20/18
+
+1. Installing the OS
+a) Purchase an Adafruit SD card that has NOOBS already installed OR
+b) Download NOOBS from https://www.raspberrypi.org/downloads/noobs/ 
+SD card should be 4-32 GB
+extract downloaded file, copy all files from noobs directory to SD card root directory
+2. Configure raspberry pi
+a) change password
+b) time preferences
+c) language & keyboard
+3. Python distribution: miniconda3
+a) install per: https://stackoverflow.com/questions/39371772/how-to-install-anaconda-on-raspberry-pi-3-model-b 
+1. wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-armv7l.sh
+2. md5sum Miniconda3-latest-Linux-armv7l.sh
+3. bash Miniconda3-latest-Linux-armv7l.sh
+4. Install numpy and pyserial
+a) find python version
+1. conda update conda
+2. conda install anaconda-client
+3. conda search "^python$"
+b) create virtual python environment (ex. for python version 3.4.3)
+1. conda create –n py34 python=3.4.3
+2. source activate py34
+c) Install NumPy
+1. conda install numpy
+d) Install pyserial
+1. pip install pyserial
+5. Install GNU Octave, Psychtoolbox, and oct2py
+a) Octave
+1. sudo apt-get install octave
+b) PTB
+1. http://neuro.debian.net/install_pkg.html?p=octave-psychtoolbox-3
+2. **did not install neuro debian
+3. sudo apt-get install octave-psychtoolbox-3
+c) oct2py
+1. pip install setuptools
+2. pip install oct2py -I
+6. Install Other Packages with pip
+a) datetime
+b) struct
+7. Install Arduino IDE
+a) installing:
+1. sudo apt-get install arduino
+2. sudo apt-get install dos2unix
+3. wget https://raw.githubusercontent.com/wyolum/alamode/master/alamode-setup/stretch-setup
+4. sudo dos2unix stretch-setup
+b) correct version of java:
+1. sudo apt-get remove openjdk-8-jre-headless
+2. sudo apt-get install openjdk-8-jre
+
+python 3.5:
+conda config --add channels rpi
+conda install python=3.5
+conda create -n py35 python=3.5

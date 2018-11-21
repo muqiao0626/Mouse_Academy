@@ -61,7 +61,7 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     rewardAmount = 4
     timeout = 8
-    sessionDurationMinutes = 40
+    sessionDurationMinutes = 25
     responseWindow = 700#in ms
     responseWindowSecs = 0.001*responseWindow
     
@@ -80,8 +80,9 @@ def runProtocol(bpodPort, reportCard):
     RightPortBin = 4
     trialTypes = []
     minDelay = 400
-    maxDelay = 1200
+    maxDelay = 2200
     patchSize = 25
+    flipDelay = 0.121
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Timeout": timeout,
                            "Min Delay":minDelay,
@@ -121,7 +122,7 @@ def runProtocol(bpodPort, reportCard):
             
         sma.addState('Name', 'VariablePause',
                      'Timer', delayTime,
-                     'StateChangeConditions', ('Tup', 'WaitForLick', 'Port1Out', 'Withdrawal', 'Port2In', 'FalseStart'),
+                     'StateChangeConditions', ('Tup', 'Display', 'Port1Out', 'Withdrawal', 'Port2In', 'FalseStart'),
                      'OutputActions', ())
         
         sma.addState('Name', 'FalseStart',
@@ -129,10 +130,15 @@ def runProtocol(bpodPort, reportCard):
                      'StateChangeConditions', ('Port2In', 'FalseStart', 'Tup', 'VariablePause', 'Port1Out', 'Withdrawal'),
                      'OutputActions', ('SoftCode', 2))
         
+        sma.addState('Name', 'Display',
+                     'Timer', flipDelay,
+                     'StateChangeConditions', ('Port2In', 'FalseStart', 'Port1Out', 'Withdrawal', 'Tup', 'WaitForLick'),
+                     'OutputActions', ('SoftCode', 1))
+        
         sma.addState('Name', 'WaitForLick',
                      'Timer', responseWindowSecs,
                      'StateChangeConditions', ('Port2In', 'RewardLick', 'Port1Out', 'Withdrawal', 'Tup', 'Miss'),
-                     'OutputActions', ('SoftCode', 1))
+                     'OutputActions', ())
 
         sma.addState('Name', 'RewardLick',
                  'Timer', CenterValveTime,

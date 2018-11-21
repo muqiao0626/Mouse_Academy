@@ -61,14 +61,13 @@ class SoftCodeHandler(object):
             self.pg.display.flip()
             completeTime = time.time()
             self.patchFlip = self.patchFlip + [completeTime]
-            print('Delay:', completeTime - startTime)
+            
         elif byte==2: #to show black after lick
             startTime = time.time()
             self.drawBlack()
             self.pg.display.flip()
             completeTime = time.time()
             self.blackFlip = self.blackFlip + [completeTime]
-            print('Delay:', completeTime - startTime)
             
         
     def close(self):
