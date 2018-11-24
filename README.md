@@ -18,7 +18,7 @@ The folders MATLAB_PC and Python_RasPi contain the firmware and software designe
 
 #### Documentation
 
-The code was written in Arduino language (C) which has been tested on ARDUINO (IDE) 1.8.5. To run the code, you need to install the following packages:
+The code was written in Arduino language which has been tested on ARDUINO (IDE) 1.8.5. To run the code, you need to install the following packages:
 ```
 Servo.h
 ```
@@ -32,14 +32,14 @@ Compile the code in ARDUINO (IDE) 1.8.5 and upload it to Arduino Mega 2560
 
 Check the software folder and the corresponding txt files for instructions
 
-## Licence
+## 3. Licence
 
 These files are freely available under the terms of General Public License v3.0 (enclosed with this repository)
 
-## Acknowledgement
+## 4. Acknowledgement
 
 We thank Josh Sanders (Sanworks) for his advice on how to incorporate Bpod in Mouse Academy.
 
-## Contact
+## 5. Contact
 
 For more questions, please contact Mu Qiao at muqiao@caltech.edu and Sarah Sam at ssam@caltech.edu
