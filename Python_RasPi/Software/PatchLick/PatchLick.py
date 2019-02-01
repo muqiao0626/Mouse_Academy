@@ -107,18 +107,18 @@ def runProtocol(bpodPort, reportCard):
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
-        if withdrawal:
-            delayTime = vptime #+ 2 #penalty for withdrawal
-            sma.addState('Name', 'WaitForInit',
+##        if withdrawal:
+        delayTime = vptime #+ 2 #penalty for withdrawal
+        sma.addState('Name', 'WaitForInit',
                      'Timer', 0,
                      'StateChangeConditions', ('Port1In', 'VariablePause', 'Port1Out', 'Withdrawal'),
                      'OutputActions', ())
-        else:
-            delayTime = vptime
-            sma.addState('Name', 'WaitForInit',
-                         'Timer', 0.01,
-                         'StateChangeConditions', ('Tup', 'VariablePause', 'Port1Out', 'Withdrawal'),
-                         'OutputActions', ())
+##        else:
+##            delayTime = vptime
+##            sma.addState('Name', 'WaitForInit',
+##                         'Timer', 0.01,
+##                         'StateChangeConditions', ('Tup', 'VariablePause', 'Port1Out', 'Withdrawal'),
+##                         'OutputActions', ())
             
         sma.addState('Name', 'VariablePause',
                      'Timer', delayTime,
