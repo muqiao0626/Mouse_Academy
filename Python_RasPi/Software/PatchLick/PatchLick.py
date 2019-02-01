@@ -79,8 +79,8 @@ def runProtocol(bpodPort, reportCard):
     CenterPortBin = 2
     RightPortBin = 4
     trialTypes = []
-    minDelay = 400
-    maxDelay = 2200
+    minDelay = 700
+    maxDelay = 3000
     patchSize = 25
     flipDelay = 0.121
     myBpod.updateSettings({"Reward Amount": rewardAmount,
@@ -127,7 +127,7 @@ def runProtocol(bpodPort, reportCard):
         
         sma.addState('Name', 'FalseStart',
                      'Timer', timeout,
-                     'StateChangeConditions', ('Port2In', 'FalseStart', 'Tup', 'VariablePause', 'Port1Out', 'Withdrawal'),
+                     'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ('SoftCode', 2))
         
         sma.addState('Name', 'Display',
@@ -145,12 +145,12 @@ def runProtocol(bpodPort, reportCard):
                  'StateChangeConditions', ('Tup', 'Drinking'),
                  'OutputActions', ('ValveState', 2, 'SoftCode', 2))
         sma.addState('Name', 'Drinking',
-                     'Timer', 0.8,
-                     'StateChangeConditions', ('Tup', 'exit', 'Port2In', 'Drinking', 'Port1Out', 'Withdrawal'),
+                     'Timer', 0,
+                     'StateChangeConditions', ('Port1Out', 'exit'),
                      'OutputActions', ())
         sma.addState('Name', 'Miss',
                      'Timer', timeout,
-                     'StateChangeConditions', ('Tup', 'exit', 'Port1Out', 'Withdrawal'),
+                     'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ('SoftCode', 2))
         sma.addState('Name', 'Withdrawal',
                      'Timer', 0,
