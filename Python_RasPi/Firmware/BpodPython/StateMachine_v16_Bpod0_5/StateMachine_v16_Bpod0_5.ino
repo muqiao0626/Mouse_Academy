@@ -427,8 +427,8 @@ for (int i = 0; i < nOutputs; i++) {
       case 'W':
       case 'S':
         pinMode(OutputCh[i], OUTPUT);
-        digitalWrite(OutputCh[i], HIGH); # switch valve to address bug where
-        delay(5);                        # valve opens when board is reset
+        digitalWrite(OutputCh[i], HIGH); // switch valve to address bug where
+        delay(5);                        // valve opens when board is reset
         digitalWrite(OutputCh[i], LOW);
       break;
       case 'P':
