@@ -49,6 +49,7 @@ def runProtocol(bpodPort, reportCard):
     import datetime
     import time
     myBpod = BpodObject(bpodPort)
+    myBpod.set_protocol('ProtocolTemplate')
     import numpy as np
 
     d = datetime.date.today()
