@@ -25,6 +25,7 @@ import site
 
 def main(argv):
     rasPiSoftwarePath = os.path.dirname(os.path.realpath(__file__))
+    os.mkdir(os.path.join(rasPiSoftwarePath, 'Data'))
     modulePath = os.path.join(rasPiSoftwarePath, 'Modules')
     rfidPath = os.path.join(rasPiSoftwarePath, 'RFID')
     packages = site.getusersitepackages()
