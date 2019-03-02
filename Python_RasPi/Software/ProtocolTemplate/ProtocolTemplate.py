@@ -37,7 +37,7 @@ def main(argv):
     mouse = ReportCard(sub)
     mouse.load()
     
-    bpodPort = BpodUtils.findBpodUSBPort()
+    bpodPort = AcademyUtils.findBpodUSBPort()
     myBpod, reportCard = runProtocol(bpodPort, mouse)
     return myBpod, reportCard
                 
