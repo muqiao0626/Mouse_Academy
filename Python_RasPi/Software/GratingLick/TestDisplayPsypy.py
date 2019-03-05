@@ -13,11 +13,11 @@ def call_python_version(Version, Module, Function, ArgumentList):
 
 def main():
     starttime = time.time()
-    drawtime, updatetime = call_python_version("2.7", "TestDisplayPy2", "mainTest",  
+    drawtime, updatetime, grating = call_python_version("2.7", "TestDisplayPy2", "mainTest",  
                              [])
     print('starttime:', starttime)
     print('drawtime:', drawtime)
     print('updatetime:', updatetime)
-    
+    print('grating:', grating)
 if __name__ == "__main__":
     main()
