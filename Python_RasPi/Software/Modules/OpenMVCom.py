@@ -5,8 +5,8 @@ import AcademyUtils
 import sys
 
 def connect():
-    camPort = AcademyUtils.getCamPort()
-    camSer = serial.Serial(camPort, 9600, timeout=1)
+    camPorts = AcademyUtils.getCamPorts()
+    camSer = serial.Serial(camPorts[0], 9600, timeout=1)
     time.sleep(2)
     connectByte = camSer.read()
     connectMsg = int.from_bytes(connectByte, byteorder='little')
@@ -16,8 +16,26 @@ def connect():
         connected = False
     return camSer, connected
 
+def connectAll():
+    camPorts = AcademyUtils.getCamPorts()
+    numCams = len(camPorts)
+    connected = [False for x in range(numCams)]
+    for camNum, camPort in enumerate(camPorts):
+        camSer[camNum] = serial.Serial(camPort, 9600, timeout=1)
+        time.sleep(2)
+        connectByte = camSer.read()
+        connectMsg = int.from_bytes(connectByte, byteorder='little')
+        if connectMsg == 1:
+            connected[camNum] = True
+    return camSers, connected
+
 def disconnect(camSer):
     camSer.close()
+    return True
+
+def disconnectAll(camSers):
+    for cam in camSers:
+        camSer.close()
     return True
 
 ##################################################

@@ -86,7 +86,14 @@ def getDevices():
         l = port[1].split(' (')
         portName = port[0]
         device = l[0].strip(')')
-        devices.update({device:portName})
+        tag = 1
+        dname = device
+        while dname in devices:
+            if tag==1: #first time seeing duplicate device name, add '01' to first
+                devices[' '.join([device, '%02d' % tag])] = devices.pop(device)
+            tag += 1
+            dname = ' '.join([device, '%02d' % tag])
+        devices.update({dname:portName})
     return devices
 
 def printDevices():
@@ -95,7 +102,6 @@ def printDevices():
     for device in devices:
         portname = devices[device]
         print('{}: {}'.format(device, portname))
-    return devices
 
 #Toggle DTR to reset serial port
 def resetSer(ser):
@@ -124,17 +130,18 @@ def resetBpodPort():
     bpodResetPort = findBpodProgPort()
     serial.Serial(bpodResetPort, 9600, timeout=0).close()
         
-def getCamPort():
+def getCamPorts():
     foundCamPort = False
     devices = getDevices()
+    camPorts = []
     for device in devices:
         portname = devices[device]
         if 'OpenMV' in device:
-            camPort = portname
+            camPorts = camPorts + [portname]
             foundCamPort = True
             break
     if foundCamPort:
-        return camPort
+        return camPorts
     else:
         raise DeviceError('OpenMV Cam USB COM Port not connected.')
     
