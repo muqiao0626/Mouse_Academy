@@ -84,15 +84,13 @@ def main():
     elapsed_time = 0
     
     try:
-        camSer, connected = OpenMVCom.connect()
+        camSers, connected = OpenMVCom.connectAll()
     except AcademyUtils.DeviceError as e:
         print(e)
-        connected = False
+        connected = [False]
         
-    if connected:
-        print("Successful connection to OpenMV cam.")
-    else:
-        print("Could not connect to OpenMV cam.")
+    print("Successful connection to OpenMV cam: %d/%d" % (sum(connected), len(connected)))
+
     idIn = ""
 
     MegaCom.openDoor(globalVars['megaSer'], 1)
@@ -159,10 +157,23 @@ def main():
                                 print("Unable to close door 2.")
                                 passedTrainingDoor = False
                                 continue
+                    ##############################
+                    #
+                    # Start camera recordings
+                    #
+                    ##############################
                     try:
-                        compTimeObj = OpenMVCom.startRecording(camSer)
+                        compTimeObjs = []
+                        for camSer in camSers:
+                            compTimeObjs = compTimeObjs + [OpenMVCom.startRecording(camSer)]
                     except Exception as e:
                         print('SerialException: OpenMV cam not connected.', e)
+                        
+                    #############################
+                    #
+                    # Start Bpod protocol
+                    #
+                    #############################
                     protocol = reportCards[tracking].currentProtocol
                     protocolModule = importlib.import_module('%s.%s' %(protocol,protocol))
                     print('%s beginning protocol "%s"' %(tracking, protocol))
@@ -171,10 +182,27 @@ def main():
                     except Exception as e:
                         print("Bpod exception:\n%s" %e)
                         AcademyUtils.resetBpodPort()
+                    #############################
+                    #
+                    # Stop camera recordings
+                    #
+                    #############################
                     try:
-                        actualStartTimeObj, endTimeObj, dur = OpenMVCom.stopRecording(camSer)
+                        actualStartTimeObjs = []
+                        endTimeObjs = []
+                        durs = []
+                        for camSer in camSers:
+                            actualStartTimeObj, endTimeObj, dur = OpenMVCom.stopRecording(camSer)
+                            actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
+                            endTimeObjs = endTimeObjs + [endTimeObj]
+                            durs = durs + [dur]
                     except Exception as e:
                         print('Camera failure:\n%s' %e)
+                    #############################
+                    #
+                    # Wait for exit training
+                    #
+                    #############################
                     #clear buffer 2 so we can read when
                     #training mouse passes reader 2
                     buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)

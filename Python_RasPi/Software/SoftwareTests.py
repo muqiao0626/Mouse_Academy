@@ -105,5 +105,30 @@ def testRecord():
     print('Actual recording time: %d seconds.' % dur)
     OpenMVCom.disconnect(camSer)
     
+def testRecordAll():
+    import Modules.OpenMVCom as OpenMVCom
+    movSecs = 3
+    camSers, connected = OpenMVCom.connectAll()
+    print('Connected:', connected)
+    time.sleep(1)
+    compTimeObjs = []
+    for camSer in camSers:
+        compTimeObj = OpenMVCom.startRecording(camSer)
+        compTimeObjs = compTimeObjs + [compTimeObj]
+        print('Recording started', compTimeObj)
+    actualStartTimeObjs = []
+    endTimeObjs = []
+    durs = []
+    time.sleep(movSecs)
+    for camSer in camSers:
+        actualStartTimeObj, endTimeObj, dur = OpenMVCom.stopRecording(camSer)
+        actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
+        endTimeObjs = endTimeObjs + [endTimeObj]
+        durs = durs + [dur]
+        print('Recording ended', endTimeObj)
+        OpenMVCom.disconnect(camSer)
+        time.sleep(0.01)
+    
+    
 class AcademyUtilsError(Exception):
     pass

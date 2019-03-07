@@ -13,7 +13,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import sensor, image, time, mjpeg, pyb, os
+import sensor, image, time, mjpeg, pyb, os, machine
 import ustruct as struct
 
 
@@ -35,9 +35,9 @@ while(True):
 
     connected = usb_vcp.isconnected()
     if connected:
-        pyb.LED(BLUE_LED_PIN).on()
+        pyb.LED(RED_LED_PIN).on()
         pyb.delay(100)
-        pyb.LED(BLUE_LED_PIN).off()
+        pyb.LED(RED_LED_PIN).off()
     #print(connected)
     usb_vcp.send(int(connected))
     nBytes = 13
@@ -112,3 +112,4 @@ while(True):
         stats.write(vidEndStr)
         stats.close()
         tagRead = False
+        connected = False

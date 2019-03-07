@@ -139,7 +139,6 @@ def getCamPorts():
         if 'OpenMV' in device:
             camPorts = camPorts + [portname]
             foundCamPort = True
-            break
     if foundCamPort:
         return camPorts
     else:

@@ -19,11 +19,12 @@ def connect():
 def connectAll():
     camPorts = AcademyUtils.getCamPorts()
     numCams = len(camPorts)
+    camSers = []
     connected = [False for x in range(numCams)]
     for camNum, camPort in enumerate(camPorts):
-        camSer[camNum] = serial.Serial(camPort, 9600, timeout=1)
+        camSers = camSers + [serial.Serial(camPort, 9600, timeout=1)]
         time.sleep(2)
-        connectByte = camSer.read()
+        connectByte = camSers[camNum].read()
         connectMsg = int.from_bytes(connectByte, byteorder='little')
         if connectMsg == 1:
             connected[camNum] = True
