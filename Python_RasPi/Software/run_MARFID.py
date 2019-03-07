@@ -163,9 +163,7 @@ def main():
                     #
                     ##############################
                     try:
-                        compTimeObjs = []
-                        for camSer in camSers:
-                            compTimeObjs = compTimeObjs + [OpenMVCom.startRecording(camSer)]
+                        compTimeObjs = OpenMVCom.startRecordingAll(camSers)
                     except Exception as e:
                         print('SerialException: OpenMV cam not connected.', e)
                         
@@ -188,14 +186,7 @@ def main():
                     #
                     #############################
                     try:
-                        actualStartTimeObjs = []
-                        endTimeObjs = []
-                        durs = []
-                        for camSer in camSers:
-                            actualStartTimeObj, endTimeObj, dur = OpenMVCom.stopRecording(camSer)
-                            actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
-                            endTimeObjs = endTimeObjs + [endTimeObj]
-                            durs = durs + [dur]
+                        actualStartTimeObjs, endTimeObjs, durs = OpenMVCom.stopRecordingAll(camSers)
                     except Exception as e:
                         print('Camera failure:\n%s' %e)
                     #############################

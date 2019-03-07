@@ -35,7 +35,7 @@ def disconnect(camSer):
     return True
 
 def disconnectAll(camSers):
-    for cam in camSers:
+    for camSer in camSers:
         camSer.close()
     return True
 
@@ -63,6 +63,30 @@ def stopRecording(ser):
     actualStartTimeObj, endTimeObj = checkRecording(ser)
     actualDuration = (endTimeObj - actualStartTimeObj).total_seconds()
     return actualStartTimeObj, endTimeObj, actualDuration
+
+def startRecordingAll(camSers):
+    startTimeObjs = []
+    for camSer in camSers:
+        startTimeObj = startRecording(camSer)
+        startTimeObjs = startTimeObjs + [startTimeObj]
+        time.sleep(0.01)
+        
+    return startTimeObjs
+
+def stopRecordingAll(camSers):
+    actualStartTimeObjs = []
+    endTimeObjs = []
+    actualDurations = []
+    for camSer in camSers:
+        actualStartTimeObj, endTimeObj, actualDuration = stopRecording(camSer)
+        actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
+        endTimeObjs = endTimeObjs + [endTimeObj]
+        actualDurations = actualDurations + [actualDuration]
+        time.sleep(0.01)
+    return actualStartTimeObjs, endTimeObjs, actualDurations
+    
+
+
 
 ##################################################
 #
