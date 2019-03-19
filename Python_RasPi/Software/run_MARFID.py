@@ -159,6 +159,16 @@ def main():
                                 continue
                     ##############################
                     #
+                    # Turn on arena lights
+                    #
+                    ##############################
+                    try:
+                        MegaCom.turnLightsOn(globalVars['megaSer'])
+                    except Exception as e:
+                        print(e)
+                    
+                    ##############################
+                    #
                     # Start camera recordings
                     #
                     ##############################
@@ -189,6 +199,16 @@ def main():
                         actualStartTimeObjs, endTimeObjs, durs = OpenMVCom.stopRecordingAll(camSers)
                     except Exception as e:
                         print('Camera failure:\n%s' %e)
+                        
+                    ##############################
+                    #
+                    # Turn off arena lights
+                    #
+                    ##############################
+                    try:
+                        MegaCom.turnLightsOff(globalVars['megaSer'])
+                    except Exception as e:
+                        print(e)
                     #############################
                     #
                     # Wait for exit training
