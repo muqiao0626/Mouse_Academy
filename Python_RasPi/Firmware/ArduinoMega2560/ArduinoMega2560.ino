@@ -129,7 +129,7 @@ void loop() {
       if (idRead == '1') {
         openDoor(servo1);
       }
-      if (idRead == '2') {
+      else if (idRead == '2') {
         openDoor(servo2);
       }
       Serial.println(openMsg);
@@ -144,7 +144,7 @@ void loop() {
           Serial.println(closeMsg);
         }
       }
-      if (idRead == '2') {
+      else if (idRead == '2') {
         closed = closeDoor(servo2, 2);
         if (closed == 1) {
           Serial.println(closeMsg);
@@ -168,10 +168,11 @@ void loop() {
   //TURN ON LIGHTS
     else if (commandRead == '5') {
       if (idRead == '1') {
-        lightsOn();
+        lightsOn(lightsPin);
       Serial.println(lightsOnMsg);
+      }
         else if (idRead == '2'){
-          lightsOff();
+          lightsOff(lightsPin);
           Serial.println(lightsOffMsg);
         }
     }
@@ -179,7 +180,7 @@ void loop() {
   }
   delay(10);
 }
-}
+
 
 
 void lightsOn(int pinNum){
