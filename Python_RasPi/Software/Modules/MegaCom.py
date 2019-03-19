@@ -180,6 +180,28 @@ def tag1InRange(megaSer):
     except:
         raise MegaComError('tag1InRange failed, message: %s' % msgstr)
     
+#write two-byte code for turning lights on
+def turnLightsOn(megaSer):
+    commandStr = '51' 
+    megaSer.write(commandStr.encode())
+    time.sleep(0.005)
+    msgstr = megaSer.readline().decode()
+    try:
+        isOn = "on" in msgstr.lower()
+    except:
+        raise MegaComError('Lights ON failed, message: %s' % msgstr)
+    
+#write two-byte code for turning lights off
+def turnLightsOff(megaSer):
+    commandStr = '52' 
+    megaSer.write(commandStr.encode())
+    time.sleep(0.005)
+    msgstr = megaSer.readline().decode()
+    try:
+        isOn = "off" in msgstr.lower()
+    except:
+        raise MegaComError('Lights OFF failed, message: %s' % msgstr)
+    
 #write two-byte coe for operating servo to close door
 def closeDoor(megaSer, servoNum):
     global door1open
