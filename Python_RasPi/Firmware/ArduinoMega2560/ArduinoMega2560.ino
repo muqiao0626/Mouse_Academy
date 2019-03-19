@@ -12,6 +12,7 @@ const float R_DIV = 3300.0; // Measured resistance of 3.3k resistor
 const int closeWrite = 163;
 const int openWrite = 120;
 const int tag1InRangePin = 52;
+const int lightsPin = 50;
 
 const char readCompleteMsg[18] = "read tag complete";
 const char openMsg[19] = "open door complete";
@@ -19,6 +20,8 @@ const char closeMsg[20] = "close door complete";
 const char obstructMsg[24] = "obstruction encountered";
 const char trueMsg[5] = "True";
 const char falseMsg[6] = "False";
+const char lightsOnMsg[10] = "Lights ON";
+const char lightsOffMsg[11] = "Lights OFF";
 int idLen = 12;
 
 char currentTag[13] = "000000000000";
@@ -69,6 +72,7 @@ void setup() {
   setTag2(blankTag);
   setTag3(blankTag);
   pinMode(tag1InRangePin, INPUT);
+  pinMode(lightsPin, OUTPUT);
   //reset RFID readers
   pinMode(RFIDResetPin1, INPUT);
   //digitalWrite(RFIDResetPin1, HIGH);
@@ -147,6 +151,7 @@ void loop() {
         }
       }
     }
+    //CHECK IF ANIMAL IN RANGE OF ANT1
     else if (commandRead == '9') {
       if (idRead == '0') {
       
@@ -160,12 +165,31 @@ void loop() {
     }
 
   }
+  //TURN ON LIGHTS
+    else if (commandRead == '5') {
+      if (idRead == '1') {
+        lightsOn();
+      Serial.println(lightsOnMsg);
+        else if (idRead == '2'){
+          lightsOff();
+          Serial.println(lightsOffMsg);
+        }
+    }
+
+  }
   delay(10);
 }
 }
 
 
+void lightsOn(int pinNum){
+  digitalWrite(pinNum, HIGH);
+  
+}
 
+void lightsOff(int pinNum){
+  digitalWrite(pinNum, LOW);
+}
 
 void tag1InRange(){
   tir1 = (digitalRead(tag1InRangePin) == LOW);
