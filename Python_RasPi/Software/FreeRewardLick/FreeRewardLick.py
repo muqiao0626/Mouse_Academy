@@ -60,23 +60,16 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     rewardAmount = 4
     timeout = 5
-    sessionDurationMinutes = 10
+    sessionDurationMinutes = 5
     
-    LeftPort = int(1)
-    CenterPort = int(2)
-    RightPort = int(3)
-    valveTimes = myBpod.getValveTimes(rewardAmount, [1, 2, 3])
+    lickPort = int(1)
+    valveTimes = myBpod.getValveTimes(rewardAmount, [1])
 
-    LeftValveTime = valveTimes[0]
-    RightValveTime = valveTimes[2]
-    CenterValveTime = valveTimes[1]
+    lickValveTime = valveTimes[0]
 
-    LeftLED = 'PWM%d' % LeftPort
-    CenterLED = 'PWM%d' % CenterPort
-    RightLED = 'PWM%d' % RightPort
-    LeftPortBin = 1
-    CenterPortBin = 2
-    RightPortBin = 4
+    lickPortBin = 1
+    lickPortIn = 'Port%dIn' % lickPort
+    lickPortOut = 'Port%dOut' % lickPort
     trialTypes = []
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Timeout": timeout,
@@ -99,17 +92,17 @@ def runProtocol(bpodPort, reportCard):
         
         sma.addState('Name', 'WaitForLick',
                      'Timer', 0,
-                     'StateChangeConditions', ('Port2In', 'RewardLick'),
+                     'StateChangeConditions', (lickPortIn, 'RewardLick'),
                      'OutputActions', ())
 
         sma.addState('Name', 'RewardLick',
-                 'Timer', CenterValveTime,
+                 'Timer', lickValveTime,
                  'StateChangeConditions', ('Tup', 'WaitForOut'),
-                 'OutputActions', ('ValveState', 2))
+                 'OutputActions', ('ValveState', lickPortBin))
         
         sma.addState('Name', 'WaitForOut',
                      'Timer', 0,
-                     'StateChangeConditions', ('Port2Out', 'ExitPause'),
+                     'StateChangeConditions', (lickPortOut, 'ExitPause'),
                      'OutputActions', ())
         
         sma.addState('Name', 'ExitPause',
