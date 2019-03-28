@@ -37,7 +37,7 @@ def main(argv):
     mouse = ReportCard(sub)
     mouse.load()
     
-    bpodPort = BpodUtils.findBpodUSBPort()
+    bpodPort = AcademyUtils.findBpodUSBPort()
     myBpod, reportCard = runProtocol(bpodPort, mouse)
     return myBpod, reportCard
                 
@@ -49,7 +49,7 @@ def runProtocol(bpodPort, reportCard):
     import datetime
     import time
     myBpod = BpodObject(bpodPort)
-    myBpod.set_protocol('ProtocolTemplate')
+    myBpod.set_protocol('FreeRewardCenter')
     import numpy as np
 
     d = datetime.date.today()
@@ -60,27 +60,18 @@ def runProtocol(bpodPort, reportCard):
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
     rewardAmount = 4
-    timeout = 5
-    sessionDurationMinutes = 1
+    sessionDurationMinutes = 0.05
     
-    LeftPort = int(1)
-    CenterPort = int(2)
-    RightPort = int(3)
-    valveTimes = myBpod.getValveTimes(rewardAmount, [1, 2, 3])
+    centerPort = int(2)
+    valveTimes = myBpod.getValveTimes(rewardAmount, [centerPort])
 
-    LeftValveTime = valveTimes[0]
-    RightValveTime = valveTimes[2]
-    CenterValveTime = valveTimes[1]
+    centerValveTime = valveTimes[0]
 
-    LeftLED = 'PWM%d' % LeftPort
-    CenterLED = 'PWM%d' % CenterPort
-    RightLED = 'PWM%d' % RightPort
-    LeftPortBin = 1
-    CenterPortBin = 2
-    RightPortBin = 4
+    centerPortBin = 1
+    centerPortIn = 'Port%dIn' % lickPort
+    centerPortOut = 'Port%dOut' % lickPort
     trialTypes = []
     myBpod.updateSettings({"Reward Amount": rewardAmount,
-                           "Timeout": timeout,
                            "Session Duration (min)": sessionDurationMinutes})
     
     currentTrial = 0
@@ -95,52 +86,28 @@ def runProtocol(bpodPort, reportCard):
     
     while elapsed_time < sessionDurationMinutes*60:
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
-        #choose random decimal between 0 and 1
-        randomDec = random.random()
         
-        if randomDec > 0.5:
-            trialType = 'Left'
-        else:
-            trialType = 'Right'
-        #update list of trial types to save to file
-        trialTypes = trialTypes + [trialType]
-        print('Trial %d, %s' % (currentTrial, trialType))
+        print('Trial %d' % currentTrial)
         
-        if trialType == 'Left':
-            leftCorrect = 'RewardLeft'
-            rightCorrect = 'Timeout'
-            displayLED = 'PWM1'
-            rewardState = 'RewardLeft'
-        else:
-            leftCorrect = 'Timeout'
-            rightCorrect = 'RewardRight'
-            displayLED = 'PWM3'
-            rewardState = 'RewardRight'
-            
         sma.addState('Name', 'WaitForPoke',
                      'Timer', 0,
-                     'StateChangeConditions', ('Port1In', leftCorrect, 'Port3In', rightCorrect),
-                     'OutputActions', (displayLED, 200))
+                     'StateChangeConditions', (lickPortIn, 'CenterReward'),
+                     'OutputActions', ())
 
-        sma.addState('Name', 'RewardLeft',
-                 'Timer', LeftValveTime,
-                 'StateChangeConditions', ('Tup', 'ExitPause'),
-                 'OutputActions', ('ValveState', 1))
-
-        sma.addState('Name', 'RewardRight',
-                 'Timer', RightValveTime,
-                 'StateChangeConditions', ('Tup', 'ExitPause'),
-                 'OutputActions', ('ValveState', 4))
-
-        sma.addState('Name', 'Timeout',
-                     'Timer', timeout,
+        sma.addState('Name', 'CenterReward',
+                 'Timer', centerValveTime,
+                 'StateChangeConditions', ('Tup', 'WaitForOut'),
+                 'OutputActions', ('ValveState', centerPortBin))
+        
+        sma.addState('Name', 'WaitForOut',
+                     'Timer', 0,
+                     'StateChangeConditions', (centerPortOut, 'ExitPause'),
+                     'OutputActions', ())
+        
+        sma.addState('Name', 'ExitPause',
+                     'Timer', exitPauseTime,
                      'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ())
-                     
-        sma.addState('Name', 'ExitPause',
-                 'Timer', exitPauseTime,
-                 'StateChangeConditions', ('Tup','exit'),
-                 'OutputActions', ())
     
         
         myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
@@ -149,7 +116,7 @@ def runProtocol(bpodPort, reportCard):
         rawEventsDict = myBpod.structToDict(RawEvents)
         
         #Find reward times to update session water
-        rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, rewardState)
+        rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'CenterReward')
         rewarded = rewardTimes[0][0]>0
         
         #if correct and water rewarded, update water and reset streak
