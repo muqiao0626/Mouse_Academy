@@ -59,6 +59,9 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
+    
+    sessionDurationMinutes = 30
+    
     minReward = 2
     maxReward = 8
     LeftPort = int(1)
@@ -68,33 +71,40 @@ def runProtocol(bpodPort, reportCard):
     maxValveTimes = myBpod.getValveTimes(maxReward, [LeftPort, CenterPort, RightPort])
     valveTimes = {
         'Min':{
-            'Left': minValveTimes[0]
-            'Center': minValveTimes[1]
-            'Right': minValveTimes[2]
-            }
+            'Left': minValveTimes[0],
+            'Center': minValveTimes[1],
+            'Right': minValveTimes[2],
+            },
         'Max':{
-            'Left': maxValveTimes[0]
-            'Center': maxValveTimes[1]
-            'Right': maxValveTimes[2]
+            'Left': maxValveTimes[0],
+            'Center': maxValveTimes[1],
+            'Right': maxValveTimes[2],
             }
         }
 
-    LeftLED = 'PWM%d' % LeftPort
-    CenterLED = 'PWM%d' % CenterPort
-    RightLED = 'PWM%d' % RightPort
-    LeftPortBin = 1
-    CenterPortBin = 2
-    RightPortBin = 4
+    leftPortIn = 'Port%dIn' % LeftPort
+    centerPortIn = 'Port%dIn' % CenterPort
+    rightPortIn = 'Port%dIn' % RightPort
+    leftPortBin = 1
+    centerPortBin = 2
+    rightPortBin = 4
     trialTypes = []
-    highProb = 0.7
-    lowProb = 0.5
+    highProb = 0.8
+    lowProb = 0.4
+    
+    leftProb = lowProb
+    rightProb = highProb
+    rightRewardAmount = maxReward
+    leftRewardAmount = maxReward
+    
     myBpod.updateSettings({"Min Reward": minReward,
-                           "MaxReward": maxReward,
-                           "Min Delay": minDelay,
+                           "Max Reward": maxReward,
+                           "Left Reward": leftRewardAmount,
+                           "Right Reward": rightRewardAmount,
                            "High Probability": highProb,
                            "Low Probability": lowProb,
-                           "P(Left)": lowProb,
-                           "P(Right)": highProb,
+                           "P(Left)": leftProb,
+                           "P(Right)": rightProb,
                            "Left Amount (ul)": maxReward,
                            "Right Amount (ul)": maxReward,
                            "Session Duration (min)": sessionDurationMinutes})
@@ -111,88 +121,93 @@ def runProtocol(bpodPort, reportCard):
     elapsed_time = 0
     
     while elapsed_time < sessionDurationMinutes*60:
-        vptime = 0.001*random.randrange(minDelay, maxDelay, 10) # generate random pause time between 100 and 1400 ms (10 ms step)
+        randNum = random.random() # generate random pause time between 100 and 1400 ms (10 ms step)
+        if randNum < leftProb:
+            leftReward = True
+        else:
+            leftReward = False
+        if randNum < rightProb:
+            rightReward = True
+        else:
+            rightReward = False
+            
+        if leftReward:
+            rewardOrPauseLeft = 'RewardLeft'
+        else:
+            rewardOrPauseLeft = 'NoRewardLeft'
+        if rightReward:
+            rewardOrPauseRight = 'RewardRight'
+        else:
+            rewardOrPauseRight = 'NoRewardRight'
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
-##        if withdrawal:
-        delayTime = vptime #+ 2 #penalty for withdrawal
+        print('Random Number:', randNum)
+        print('Left Reward:', leftReward)
+        print('Right Reward:', rightReward)
+        
         sma.addState('Name', 'WaitForInit',
                      'Timer', 0,
-                     'StateChangeConditions', ('Port1In', 'VariablePause', 'Port1Out', 'Withdrawal'),
+                     'StateChangeConditions', (centerPortIn, 'WaitForChoice'),
                      'OutputActions', ())
-##        else:
-##            delayTime = vptime
-##            sma.addState('Name', 'WaitForInit',
-##                         'Timer', 0.01,
-##                         'StateChangeConditions', ('Tup', 'VariablePause', 'Port1Out', 'Withdrawal'),
-##                         'OutputActions', ())
-            
-        sma.addState('Name', 'VariablePause',
-                     'Timer', delayTime,
-                     'StateChangeConditions', ('Tup', 'Display', 'Port1Out', 'Withdrawal', 'Port2In', 'FalseStart'),
-                     'OutputActions', ())
-        
-        sma.addState('Name', 'FalseStart',
-                     'Timer', timeout,
-                     'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 2))
-        
-        sma.addState('Name', 'Display',
-                     'Timer', flipDelay,
-                     'StateChangeConditions', ('Port2In', 'FalseStart', 'Port1Out', 'Withdrawal', 'Tup', 'WaitForLick'),
-                     'OutputActions', ('SoftCode', 1))
-        
-        sma.addState('Name', 'WaitForLick',
-                     'Timer', responseWindowSecs,
-                     'StateChangeConditions', ('Port2In', 'RewardLick', 'Port1Out', 'Withdrawal', 'Tup', 'Miss'),
+        sma.addState('Name', 'WaitForChoice',
+                     'Timer', 0,
+                     'StateChangeConditions', (leftPortIn, rewardOrPauseLeft, rightPortIn, rewardOrPauseRight),
                      'OutputActions', ())
 
-        sma.addState('Name', 'RewardLick',
-                 'Timer', CenterValveTime,
-                 'StateChangeConditions', ('Tup', 'Drinking'),
-                 'OutputActions', ('ValveState', 2, 'SoftCode', 2))
-        sma.addState('Name', 'Drinking',
-                     'Timer', 0,
-                     'StateChangeConditions', ('Port1Out', 'exit'),
+        sma.addState('Name', 'RewardLeft',
+                 'Timer', valveTimes['Max']['Left'],
+                 'StateChangeConditions', ('Tup', 'exit'),
+                 'OutputActions', ('ValveState', leftPortBin))
+        sma.addState('Name', 'NoRewardLeft',
+                     'Timer', valveTimes['Max']['Left'],
+                     'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ())
-        sma.addState('Name', 'Miss',
-                     'Timer', timeout,
+        
+        sma.addState('Name', 'RewardRight',
+                 'Timer', valveTimes['Max']['Right'],
+                 'StateChangeConditions', ('Tup', 'exit'),
+                 'OutputActions', ('ValveState', rightPortBin))
+        sma.addState('Name', 'NoRewardRight',
+                     'Timer', valveTimes['Max']['Right'],
                      'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 2))
-        sma.addState('Name', 'Withdrawal',
-                     'Timer', 0,
-                     'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 2))
+                     'OutputActions', ())
     
         
         myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
         RawEvents = myBpod.runStateMachine() # Run state machine and return events
-        RawEvents.PatchFlipTime = []
-        RawEvents.PatchFlipTime.append(myBpod.softCodeHandler.patchFlip)
-        RawEvents.BlackFlipTime = []
-        RawEvents.BlackFlipTime.append(myBpod.softCodeHandler.blackFlip)
-        RawEvents.Delay = []
-        RawEvents.Delay.append(vptime)
+        RawEvents.RandomNumber = []
+        RawEvents.RandomNumber.append(randNum)
         myBpod.addTrialEvents(RawEvents)
         rawEventsDict = myBpod.structToDict(RawEvents)
-        myBpod.softCodeHandler.clearFlipTimes()
         
         #Find reward times to update session water
-        rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardLick')
-        rewarded = rewardTimes[0][0]>0
+        leftRewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardLeft')
+        rightRewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardRight')
+        rewardedLeft = leftRewardTimes[0][0]>0
+        rewardedRight = rightRewardTimes[0][0]>0
+        
+        rewarded = False
+        if rewardedLeft:
+            rewarded = True
+            print('Left Reward!')
+        if rewardedRight:
+            rewarded = True
+            print('Right Reward!')
 
 
-        try:
-            withdrawalTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'Withdrawal')
-            withdrawal = withdrawalTimes[0][0]>0
-        except AttributeError:
-            withdrawal = False
+    #    try:
+     #       withdrawalTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'Withdrawal')
+     #       withdrawal = withdrawalTimes[0][0]>0
+     #   except AttributeError:
+     #       withdrawal = False
 
         
         #if correct and water rewarded, update water and reset streak
-        if rewarded:
-            sessionWater += 0.001*rewardAmount
+        if rewardedLeft:
+            sessionWater += 0.001*leftRewardAmount
+        if rewardedRight:
+            sessionWater += 0.001*rightRewardAmount
 
         elapsed_time = time.time()-startTime
         currentTrial = currentTrial+1
@@ -201,9 +216,7 @@ def runProtocol(bpodPort, reportCard):
             print('reached maxWater (%d)' % maxWater)
             break
             
-    myBpod.softCodeHandler.close()
     print('Session water:', sessionWater)
-    myBpod.updateSettings({'Trial Types':trialTypes})
     myBpod.saveSessionData()
     reportCard.drankWater(sessionWater, myBpod.currentDataFile)
     reportCard.save()

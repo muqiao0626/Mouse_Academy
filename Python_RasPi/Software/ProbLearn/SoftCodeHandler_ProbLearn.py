@@ -15,61 +15,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
 import sys
-import time
-from pygame.locals import *
 import importlib
 
 class SoftCodeHandler(object):
     def __init__(self):
-        self.patchFlip = []
-        self.blackFlip = []
-        self.pg = importlib.import_module('pygame')
-        self.pg.init()
-        self.screenWidth = 1920
-        self.screenHeight = 1080
-        self.screen = self.pg.display.set_mode((self.screenWidth, self.screenHeight), self.pg.NOFRAME)
-        self.background = self.pg.Surface(self.screen.get_size())
-        self.background = self.background.convert()
-        self.background.fill((0, 0, 0))
-        self.screen.blit(self.background,(0,0))
-        self.pg.display.flip()
-        
-        
-        self.patchRect = self.pg.Rect((0,0),(self.screenWidth, self.screenHeight))
-        self.patchIm = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/PatchLick/patch_size=25_xoffset=+000_yoffset=+000.jpg")
-        self.patchIm = self.pg.transform.scale(self.patchIm, self.patchRect.size)
-        self.patchIm = self.patchIm.convert()
-        
-        self.drawPatch()
-
-        
-    def drawBlack(self):
-        self.screen.blit(self.background,(0,0))
-        
-    def drawPatch(self):
-        self.screen.blit(self.patchIm, self.patchRect)
-        
-    def clearFlipTimes(self):
-        self.patchFlip = []
-        self.blackFlip = []
+        self.SoftCode = True
 
     def handleSoftCode(self, byte):
-
-        if byte==1: #to show patch after hold
-            startTime = time.time()
-            self.drawPatch()
-            self.pg.display.flip()
-            completeTime = time.time()
-            self.patchFlip = self.patchFlip + [completeTime]
-            
-        elif byte==2: #to show black after lick
-            startTime = time.time()
-            self.drawBlack()
-            self.pg.display.flip()
-            completeTime = time.time()
-            self.blackFlip = self.blackFlip + [completeTime]
-            
-        
-    def close(self):
-        self.pg.display.quit()
-        self.pg.quit()
+        print('SoftCode:', byte)
