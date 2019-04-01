@@ -59,17 +59,17 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    rewardAmount = 4
-    sessionDurationMinutes = 0.05
+    rewardAmount = 8
+    sessionDurationMinutes = 10
     
     centerPort = int(2)
     valveTimes = myBpod.getValveTimes(rewardAmount, [centerPort])
 
     centerValveTime = valveTimes[0]
 
-    centerPortBin = 1
-    centerPortIn = 'Port%dIn' % lickPort
-    centerPortOut = 'Port%dOut' % lickPort
+    centerPortBin = 2
+    centerPortIn = 'Port%dIn' % centerPort
+    centerPortOut = 'Port%dOut' % centerPort
     trialTypes = []
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Session Duration (min)": sessionDurationMinutes})
@@ -91,7 +91,7 @@ def runProtocol(bpodPort, reportCard):
         
         sma.addState('Name', 'WaitForPoke',
                      'Timer', 0,
-                     'StateChangeConditions', (lickPortIn, 'CenterReward'),
+                     'StateChangeConditions', (centerPortIn, 'CenterReward'),
                      'OutputActions', ())
 
         sma.addState('Name', 'CenterReward',
