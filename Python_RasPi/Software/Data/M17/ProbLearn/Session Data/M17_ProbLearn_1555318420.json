@@ -1,0 +1,343 @@
+{
+  "Settings": {
+    "High Probability": 0.8,
+    "Left Amount (ul)": 8,
+    "Left Reward": 8,
+    "Low Probability": 0.4,
+    "Max Reward": 8,
+    "Min Reward": 2,
+    "P(Left)": 0.4,
+    "P(Right)": 0.8,
+    "Right Amount (ul)": 8,
+    "Right Reward": 8,
+    "Session Duration (min)": 5
+  },
+  "info": {
+    "BpodFirmwareVersion": 16
+  },
+  "nTrials": 3,
+  "rawData": [
+    {
+      "rawData": {
+        "EventTimestamps": [
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "Events": [
+          72,
+          73,
+          70,
+          71,
+          72,
+          108
+        ],
+        "RandomNumber": [
+          0.5582867140092673
+        ],
+        "StateTimestamps": [
+          0,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "States": [
+          0,
+          1,
+          4
+        ],
+        "TrialSentTimestamp": 1555318421.229641,
+        "TrialStartTimestamp": 0.134
+      }
+    },
+    {
+      "rawData": {
+        "EventTimestamps": [
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "Events": [
+          73,
+          72,
+          73,
+          70,
+          71,
+          70,
+          71,
+          72,
+          108
+        ],
+        "RandomNumber": [
+          0.5717034733058179
+        ],
+        "StateTimestamps": [
+          0,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "States": [
+          0,
+          1,
+          4
+        ],
+        "TrialSentTimestamp": 1555318427.751894,
+        "TrialStartTimestamp": 6.655
+      }
+    },
+    {
+      "rawData": {
+        "EventTimestamps": [
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "Events": [
+          70,
+          71,
+          73,
+          70,
+          71,
+          72,
+          73,
+          72,
+          108
+        ],
+        "RandomNumber": [
+          0.035383802595256975
+        ],
+        "StateTimestamps": [
+          0,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "States": [
+          0,
+          1,
+          4
+        ],
+        "TrialSentTimestamp": 1555318431.187858,
+        "TrialStartTimestamp": 10.09
+      }
+    }
+  ],
+  "rawEvents": {
+    "Trial": [
+      {
+        "Trial": {
+          "Events": {
+            "Port2In": [
+              429496.7295
+            ],
+            "Port2Out": [
+              429496.7295
+            ],
+            "Port3In": [
+              429496.7295,
+              429496.7295
+            ],
+            "Port3Out": [
+              429496.7295
+            ],
+            "Tup": [
+              429496.7295
+            ]
+          },
+          "States": {
+            "NoRewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "NoRewardRight": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardRight": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForChoice": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForInit": [
+              [
+                0,
+                429496.7295
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "Trial": {
+          "Events": {
+            "Port2In": [
+              429496.7295,
+              429496.7295
+            ],
+            "Port2Out": [
+              429496.7295,
+              429496.7295
+            ],
+            "Port3In": [
+              429496.7295,
+              429496.7295
+            ],
+            "Port3Out": [
+              429496.7295,
+              429496.7295
+            ],
+            "Tup": [
+              429496.7295
+            ]
+          },
+          "States": {
+            "NoRewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "NoRewardRight": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardRight": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForChoice": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForInit": [
+              [
+                0,
+                429496.7295
+              ]
+            ]
+          }
+        }
+      },
+      {
+        "Trial": {
+          "Events": {
+            "Port2In": [
+              429496.7295,
+              429496.7295
+            ],
+            "Port2Out": [
+              429496.7295,
+              429496.7295
+            ],
+            "Port3In": [
+              429496.7295,
+              429496.7295
+            ],
+            "Port3Out": [
+              429496.7295,
+              429496.7295
+            ],
+            "Tup": [
+              429496.7295
+            ]
+          },
+          "States": {
+            "NoRewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "NoRewardRight": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardRight": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForChoice": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForInit": [
+              [
+                0,
+                429496.7295
+              ]
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "sessionDateTime": "2019-04-15T01:53:40.997084",
+  "sessionStartTime": "2019-04-15 01:53:40.997084",
+  "trialSentTimestamp": [
+    1555318421.229641,
+    1555318427.751894,
+    1555318431.187858
+  ],
+  "trialStartTimestamp": [
+    0.134,
+    6.655,
+    10.09
+  ]
+}
