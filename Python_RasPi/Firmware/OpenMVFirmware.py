@@ -15,36 +15,35 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sensor, image, time, mjpeg, pyb, os, machine
 import ustruct as struct
+##############################
+# Initialize camera and connection
+# (only runs once upon establishing
+# serial connection)
+sensor.reset() # Initialize the camera sensor.
+RED_LED_PIN = 1
+BLUE_LED_PIN = 3
+sensor.set_pixformat(sensor.GRAYSCALE) # or sensor.GRAYSCALE
+sensor.set_framesize(sensor.VGA) # or sensor.QQVGA (or others)
+sensor.skip_frames(time = 2000) # Let new settings take affect.
+
+# create a new USB_VCP object
+usb_vcp = pyb.USB_VCP()
+usb_vcp.setinterrupt(-1)
+connected = usb_vcp.isconnected()
+if connected:
+    pyb.LED(RED_LED_PIN).on()
+    pyb.delay(100)
+    pyb.LED(RED_LED_PIN).off()
+#print(connected)
+#usb_vcp.send(int(connected))
+nBytes = 13
+# end of initialization code
+##############################
 
 
 while(True):
-    ##############################
-    # Initialize camera and connection
-    # (only runs once upon establishing
-    # serial connection)
-    sensor.reset() # Initialize the camera sensor.
-    RED_LED_PIN = 1
-    BLUE_LED_PIN = 3
-    sensor.set_pixformat(sensor.GRAYSCALE) # or sensor.GRAYSCALE
-    sensor.set_framesize(sensor.QQVGA) # or sensor.QQVGA (or others)
-    sensor.skip_frames(time = 2000) # Let new settings take affect.
 
-    # create a new USB_VCP object
-    usb_vcp = pyb.USB_VCP()
-    usb_vcp.setinterrupt(-1)
-
-    connected = usb_vcp.isconnected()
-    if connected:
-        pyb.LED(RED_LED_PIN).on()
-        pyb.delay(100)
-        pyb.LED(RED_LED_PIN).off()
-    #print(connected)
-    usb_vcp.send(int(connected))
-    nBytes = 13
-    # end of initialization code
-    ##############################
-
-    while connected:
+    while(True):
         ###########################
         # Check serial buffer until
         # a unix time is read.
@@ -93,6 +92,7 @@ while(True):
                 f.write(str(frameStart + recordLatency))
                 f.write('\r\n')
                 i += 1
+                pyb.delay(15)
             endBytesRead = usb_vcp.recv(endReadBuff, timeout=0)
             if endReadBuff==b'stop':
                 endRead = True
