@@ -91,6 +91,7 @@ def updateCoeffs(valvenum, calFile):
         if len(calDict["table"]) > 2:
             os.remove(calFile)
             f = open(calFile, 'w')
+            calDict["table"].update({"0.0":"0.0"})
             xs = list(calDict["table"].keys())
             x = [float(i) for i in xs]
             y = [float(calDict["table"][str(val)])*1000 for val in x]

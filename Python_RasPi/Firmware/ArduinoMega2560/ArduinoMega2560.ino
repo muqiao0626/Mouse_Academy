@@ -9,8 +9,8 @@ const int FSR_PIN2 = A1; // Pin connected to FSR/resistor divider
 const float VCC = 5; // Measured voltage of Ardunio 5V line
 const float R_DIV = 3300.0; // Measured resistance of 3.3k resistor
 
-const int closeWrite = 163;
-const int openWrite = 120;
+const int closeWrite = 15;
+const int openWrite = 60;
 const int tag1InRangePin = 52;
 const int lightsPin = 50;
 
@@ -43,7 +43,7 @@ char blankTag[13] = "000000000000";
 
 void clearCurrentTag() {
   for (int i = 0; i < 13; i++) {
-    currentTag[i] = '0';
+    currentTag[i] = blankTag[i];
   }
 }
 void setTag1(char newTag[13]) {
@@ -84,11 +84,11 @@ void setup() {
   pinMode(FSR_PIN1, INPUT);
   pinMode(FSR_PIN2, INPUT);
 
-  servo1.attach(servoPin1, 400, 1900);
+  servo1.attach(servoPin1, 570, 2300);
   delay(50);
   //openDoor(servo1, 1);
   //delay(50);
-  servo2.attach(servoPin2, 500, 2100);
+  servo2.attach(servoPin2, 576, 2300);
   delay(50);
   //closeDoor(servo2, 2);
   //delay(50);
@@ -225,7 +225,6 @@ void readTag(int tagNum) {
       while (reading == true) {
         readByte = serPointer->read();
         if (readByte == 3) {
-
           if (tagNum == 1) {
             setTag1(currentTag);
           }
@@ -250,8 +249,10 @@ void readTag(int tagNum) {
     }
     else {
       reading = false;
+      
     }
   }
+  
 }
 
 int closeDoor(Servo servo, int servonum) {
@@ -261,7 +262,8 @@ int closeDoor(Servo servo, int servonum) {
   float forceInit = fsrForce;
   float forceNow;
   //don't bother checking force at beginning and end
-  for (int theta = pos; theta < closeWrite - 6; theta += 6) {
+  //closeWrite is smaller angle
+  for (int theta = pos; theta > closeWrite + 6; theta -= 6) {
 
     if (theta < openWrite + 6 || theta > closeWrite - 6) {
       servo.write(theta);
@@ -295,7 +297,7 @@ int closeDoor(Servo servo, int servonum) {
 
 void openDoor(Servo servo) {
   int pos = servo.read();
-  for (int theta = pos; theta > openWrite + 3; theta -= 3) {
+  for (int theta = pos; theta < openWrite - 3; theta += 3) {
     servo.write(theta);
     delay(15);
   }

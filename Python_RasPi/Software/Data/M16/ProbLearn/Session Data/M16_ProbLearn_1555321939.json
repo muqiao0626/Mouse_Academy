@@ -1,0 +1,141 @@
+{
+  "Settings": {
+    "High Probability": 0.8,
+    "Left Amount (ul)": 8,
+    "Left Reward": 8,
+    "Low Probability": 0.4,
+    "Max Reward": 8,
+    "Min Reward": 2,
+    "P(Left)": 0.4,
+    "P(Right)": 0.8,
+    "Right Amount (ul)": 8,
+    "Right Reward": 8,
+    "Session Duration (min)": 10
+  },
+  "info": {
+    "BpodFirmwareVersion": 16
+  },
+  "nTrials": 1,
+  "rawData": [
+    {
+      "rawData": {
+        "EventTimestamps": [
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "Events": [
+          72,
+          73,
+          72,
+          73,
+          72,
+          73,
+          70,
+          71,
+          72,
+          108
+        ],
+        "RandomNumber": [
+          0.2152830109327405
+        ],
+        "StateTimestamps": [
+          0,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "States": [
+          0,
+          1,
+          4
+        ],
+        "TrialSentTimestamp": 1555321939.772048,
+        "TrialStartTimestamp": 0.136
+      }
+    }
+  ],
+  "rawEvents": {
+    "Trial": [
+      {
+        "Trial": {
+          "Events": {
+            "Port2In": [
+              429496.7295
+            ],
+            "Port2Out": [
+              429496.7295
+            ],
+            "Port3In": [
+              429496.7295,
+              429496.7295,
+              429496.7295,
+              429496.7295
+            ],
+            "Port3Out": [
+              429496.7295,
+              429496.7295,
+              429496.7295
+            ],
+            "Tup": [
+              429496.7295
+            ]
+          },
+          "States": {
+            "NoRewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "NoRewardRight": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardLeft": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "RewardRight": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForChoice": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForInit": [
+              [
+                0,
+                429496.7295
+              ]
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "sessionDateTime": "2019-04-15T02:52:19.537278",
+  "sessionStartTime": "2019-04-15 02:52:19.537278",
+  "trialSentTimestamp": [
+    1555321939.772048
+  ],
+  "trialStartTimestamp": [
+    0.136
+  ]
+}

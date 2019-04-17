@@ -45,6 +45,7 @@ def main():
     
     reportCards = {}
     subToTag = AcademyUtils.getSubjectToTag()
+    anyAllowed = False
     for sub in range(1, numSubjects+1):
         subject = input('Name of subject %d? ' %sub)
         while subject not in subToTag:
@@ -57,6 +58,8 @@ def main():
         if rc.getWaterToday()<rc.maxWater:
             rc.trainingAllowed = True
         rc.save()
+        if rc.trainingAllowed:
+            anyAllowed = True
         yn = input('Current protocol for "%s" is "%s". Change protocol? (y/n)' %(subject, rc.currentProtocol))
         if yn.lower()=='y' or yn.lower()=='n':
             ynGood = True
@@ -75,7 +78,7 @@ def main():
         
     globalVars = MegaCom.init()
     bpodPort = AcademyUtils.findBpodUSBPort()
-    AcademyUtils.resetBpodPort()
+    #AcademyUtils.resetBpodPort()
     
     tagIDtoSubject = AcademyUtils.getRoster()
     
@@ -85,8 +88,10 @@ def main():
     
     try:
         camSers, connected = OpenMVCom.connectAll()
+        useCam = True
     except AcademyUtils.DeviceError as e:
         print(e)
+        useCam = False
         connected = [False]
         
     print("Successful connection to OpenMV cam: %d/%d" % (sum(connected), len(connected)))
@@ -99,7 +104,7 @@ def main():
     except:
         print('door 2 failed to close')
     MegaCom.closeDoor(globalVars['megaSer'], 2)
-    while elapsed_time < 9*3600:
+    while elapsed_time < 9*3600 and anyAllowed:
     #try readers 1 and 2 for tag
         tracking = None
         globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
@@ -172,10 +177,11 @@ def main():
                     # Start camera recordings
                     #
                     ##############################
-                    try:
-                        compTimeObjs = OpenMVCom.startRecordingAll(camSers)
-                    except Exception as e:
-                        print('SerialException: OpenMV cam not connected.', e)
+                    if useCam:
+                        try:
+                            compTimeObjs = OpenMVCom.startRecordingAll(camSers)
+                        except Exception as e:
+                            print('SerialException: OpenMV cam not connected.', e)
                         
                     #############################
                     #
@@ -195,10 +201,11 @@ def main():
                     # Stop camera recordings
                     #
                     #############################
-                    try:
-                        actualStartTimeObjs, endTimeObjs, durs = OpenMVCom.stopRecordingAll(camSers)
-                    except Exception as e:
-                        print('Camera failure:\n%s' %e)
+                    if useCam:
+                        try:
+                            actualStartTimeObjs, endTimeObjs, durs = OpenMVCom.stopRecordingAll(camSers)
+                        except Exception as e:
+                            print('Camera failure:\n%s' %e)
                         
                     ##############################
                     #
@@ -254,6 +261,23 @@ def main():
                                     buff2 = MegaCom.clearBuffer(globalVars['megaSer'], 2)
                                     print("mouse %s returned to home cage" % tracking)
             elapsed_time = time.time()-startTime
+            #check if any of the mice are still allowed to train for
+            #the day. If so, continue main while loop
+            #If not, break (and exit script)
+            anyAllowed = False
+            for key in reportCards.keys():
+                if reportCards[key].trainingAllowed:
+                    anyAllowed = True
+                    break
+            if anyAllowed==False:
+                try:
+                    MegaCom.closeDoor(globalVars['megaSer'], 1)
+                    print("All pupils have completed today's training!")
+        
+                except MegaCom.ServoError as e:
+                    print(e)
+    
+
     
 
 if __name__ == '__main__':
