@@ -64,17 +64,23 @@ def runProtocol(bpodPort, reportCard):
     holdTimes = [ht for ht in range(0, maxHoldTime+1, 25)]
     
     try:
-        perfDict = reportCard.performance['HoldCenter']
+        perfDictStr = reportCard.performance['HoldCenter']
+        perfDict = {}
+        for htstr in list(perfDictStr.keys()):
+            htint = int(htstr)
+            perfDict[htint] = perfDictStr[htstr]
     except KeyError:
-        perfDict = {'HoldCenter':{ms:0 for ms in holdTimes}}
-        reportCard.performance.update(perfDict)
-    
+        reportCard.performance.update({'HoldCenter':{}})
+        perfDict = {ms:0 for ms in holdTimes}
+        perfDictStr = {str(ms):0 for ms in holdTimes}
+        reportCard.performance['HoldCenter'].update(perfDictStr)
     #find hold time
     #(max hold time with performance > 70%)
     holdTime = 0
     htidx = 0
     if perfDict[maxHoldTime] > 0.70:
         holdTime = maxHoldTime
+        reportCard.setCurrentProtocol('ProbBlocks')
     else:
         while perfDict[holdTime] > 0.70:
             htidx += 1
@@ -82,13 +88,14 @@ def runProtocol(bpodPort, reportCard):
     print('Hold Time:', holdTime) 
  
     sessionDurationMinutes = 10
-    rewardAmount = 4
+    rewardAmount = 2
     LeftPort = int(1)
     CenterPort = int(2)
     RightPort = int(3)
     valveTimes = myBpod.getValveTimes(rewardAmount, [LeftPort, CenterPort, RightPort])
     leftPortIn = 'Port%dIn' % LeftPort
     centerPortIn = 'Port%dIn' % CenterPort
+    centerPortOut = 'Port%dOut' % CenterPort
     rightPortIn = 'Port%dIn' % RightPort
     leftPortBin = 1
     centerPortBin = 2
@@ -97,7 +104,7 @@ def runProtocol(bpodPort, reportCard):
     
 
     myBpod.updateSettings({
-                           "Reward Amount (ul)": leftRewardAmount,
+                           "Reward Amount (ul)": rewardAmount,
                            "Timeout (s)": timeout,
                            "Hold Time (ms)": holdTime,
                            "Session Duration (min)": sessionDurationMinutes
@@ -115,7 +122,7 @@ def runProtocol(bpodPort, reportCard):
     startTime = time.time()
     elapsed_time = 0
     
-    while elapsed_time < sessionDurationMinutes*60 and currentTrial < numTrialsLong:
+    while elapsed_time < sessionDurationMinutes*60:
     
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
@@ -127,13 +134,8 @@ def runProtocol(bpodPort, reportCard):
                      'OutputActions', ())
         
         sma.addState('Name', 'Poked',
-                     'Timer', holdTime,
-                     'StateChangeConditions', ('Tup', 'WaitForRelease', centerPortOut, 'EarlyRelease'),
-                     'OutputActions', ())
-        
-        sma.addState('Name', 'WaitForRelease',
-                     'Timer', 0,
-                     'StateChangeConditions', (centerPortOut, 'RewardCenter'),
+                     'Timer', 0.001*holdTime,
+                     'StateChangeConditions', ('Tup', 'RewardCenter', centerPortOut, 'EarlyRelease'),
                      'OutputActions', ())
         
         sma.addState('Name', 'EarlyRelease',
@@ -142,7 +144,7 @@ def runProtocol(bpodPort, reportCard):
                      'OutputActions', ())
         
         sma.addState('Name', 'RewardCenter',
-                 'Timer', valveTimes[],
+                 'Timer', valveTimes[1],
                  'StateChangeConditions', ('Tup', 'ExitPause'),
                  'OutputActions', ('ValveState', centerPortBin))
         
@@ -175,16 +177,18 @@ def runProtocol(bpodPort, reportCard):
             break
             
     print('Session water:', sessionWater)
-    performance = numRewards/currentTrial
-    print('%d rewards in %d trials (%.02f)' % (numRewards, currentTrial, performance))
+    actualTrials = currentTrial-1
+    performance = numRewards/actualTrials
+    print('%d rewards in %d trials (%.02f)' % (numRewards, actualTrials, performance))
     if currentTrial >=50:
-        reportCard.performance.update({holdTime:performance})
-        
+        perfDictStr.update({str(holdTime):performance})
+                
+    reportCard.performance['HoldCenter'].update(perfDictStr)    
     reportCard.drankWater(sessionWater, myBpod.currentDataFile)
     reportCard.save()
     myBpod.updateSettings({
                             "Rewards":numRewards,
-                            "nTrials": currentTrial})
+                            "nTrials": actualTrials})
     myBpod.saveSessionData()
     # Disconnect Bpod
     myBpod.disconnect() # Sends a termination byte and closes the serial port. PulsePal stores current params to its EEPROM.

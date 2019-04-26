@@ -127,8 +127,25 @@ def findBpodUSBPort():
         raise DeviceError('Arduino Due Native USB Port not found.')
     
 def resetBpodPort():
-    bpodResetPort = findBpodProgPort()
-    serial.Serial(bpodResetPort, 9600, timeout=0).close()
+    bpodResetPort = findBpodUSBPort()
+    resetSer = serial.Serial(bpodResetPort, 115200, timeout=0)
+    time.sleep(0.01)
+    resetSer.close()
+    ''' software fix for port reset
+    myBpod = BpodObject(portName)
+    rc = myBpod.set_subject('Reset')
+    rc.currentProtocol = 'ResetValves'
+    valveTime = 0.005
+    valveBins = [1, 2, 4, 8, 16, 32, 64, 128]
+    for valveBin in valveBins:
+        sma = stateMachine(myBpod)
+        sma.addState('Name', 'Pulse',
+                    'Timer', valveTime,
+                    'StateChangeConditions', ('Tup', 'exit'),
+                    'OutputActions', ('ValveState', valveBin))
+        myBpod.sendStateMachine(sma)
+    myBpod.disconnect()
+    '''
         
 def getCamPorts():
     foundCamPort = False
