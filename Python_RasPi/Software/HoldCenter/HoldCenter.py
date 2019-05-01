@@ -59,7 +59,8 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    timeout = 2
+    minPerformance = 0.75
+    timeout = 5
     maxHoldTime = 400
     holdTimes = [ht for ht in range(0, maxHoldTime+1, 25)]
     
@@ -78,16 +79,16 @@ def runProtocol(bpodPort, reportCard):
     #(max hold time with performance > 70%)
     holdTime = 0
     htidx = 0
-    if perfDict[maxHoldTime] > 0.70:
+    if perfDict[maxHoldTime] > minPerformance:
         holdTime = maxHoldTime
         reportCard.setCurrentProtocol('ProbBlocks')
     else:
-        while perfDict[holdTime] > 0.70:
+        while perfDict[holdTime] > minPerformance:
             htidx += 1
             holdTime = holdTimes[htidx]
     print('Hold Time:', holdTime) 
  
-    sessionDurationMinutes = 10
+    sessionDurationMinutes = 2
     rewardAmount = 2
     LeftPort = int(1)
     CenterPort = int(2)
@@ -180,7 +181,7 @@ def runProtocol(bpodPort, reportCard):
     actualTrials = currentTrial-1
     performance = numRewards/actualTrials
     print('%d rewards in %d trials (%.02f)' % (numRewards, actualTrials, performance))
-    if currentTrial >=50:
+    if currentTrial >=30:
         perfDictStr.update({str(holdTime):performance})
                 
     reportCard.performance['HoldCenter'].update(perfDictStr)    
