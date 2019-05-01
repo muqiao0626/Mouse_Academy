@@ -61,6 +61,7 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     
     sessionDurationMinutes = 10
+    timeout = 2
     
     minReward = 2
     maxReward = 4
@@ -142,6 +143,7 @@ def runProtocol(bpodPort, reportCard):
     myBpod.updateSettings({
                            "Left Amount (ul)": leftRewardAmount,
                            "Right Amount (ul)": rightRewardAmount,
+                           "Timeout (s)": timeout,
                            "Session Duration (min)": sessionDurationMinutes
                            })
     
@@ -177,6 +179,22 @@ def runProtocol(bpodPort, reportCard):
                      'Timer', 0,
                      'StateChangeConditions', (centerPortIn, 'WaitForChoice'),
                      'OutputActions', ())
+        
+        sma.addState('Name', 'Poked',
+                     'Timer', 0.001*holdTime,
+                     'StateChangeConditions', ('Tup', 'CenterClick', centerPortOut, 'EarlyRelease'),
+                     'OutputActions', ())
+        
+        sma.addState('Name', 'CenterClick',
+                     'Timer', 0.004,
+                     'StateChangeConditions', ('Tup', 'WaitForChoice'),
+                     'OutputActions', ('ValveState', centerPortBin))
+        
+        sma.addState('Name', 'EarlyRelease',
+                     'Timer', timeout,
+                     'StateChangeConditions', ('Tup', 'exit'),
+                     'OutputActions', ())
+        
         sma.addState('Name', 'WaitForChoice',
                      'Timer', 0,
                      'StateChangeConditions', (leftPortIn, rewardOrPauseLeft, rightPortIn, rewardOrPauseRight),
