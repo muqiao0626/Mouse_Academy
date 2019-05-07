@@ -127,7 +127,7 @@ def findBpodUSBPort():
         raise DeviceError('Arduino Due Native USB Port not found.')
     
 def resetBpodPort():
-    bpodResetPort = findBpodProgPort()
+    bpodResetPort = findBpodUSBPort()
     serial.Serial(bpodResetPort, 9600, timeout=0).close()
         
 def getCamPorts():
