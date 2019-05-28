@@ -1,4 +1,5 @@
 '''
+05/26/19
 Copyright (C) 2018 Meister Lab at Caltech
 -----------------------------------------------------
 This program is free software: you can redistribute it and/or modify
@@ -40,27 +41,25 @@ nBytes = 13
 # end of initialization code
 ##############################
 
-
 while(True):
+    ###########################
+    # Check serial buffer until
+    # a unix time is read.
+    connected = usb_vcp.isconnected()
+    # READ unix time from computer
+    compTimeRead = False
+    compTimeBuff = bytearray(nBytes)
+    byteIndex = 0
+    clock = time.clock() # Tracks FPS.
+    ###############################
 
-    while(True):
-        ###########################
-        # Check serial buffer until
-        # a unix time is read.
-        connected = usb_vcp.isconnected()
-        # READ unix time from computer
-        compTimeRead = False
-        compTimeBuff = bytearray(nBytes)
-        byteIndex = 0
-        clock = time.clock() # Tracks FPS.
-        ###############################
+    while not compTimeRead:
+        bytesRead = usb_vcp.recv(compTimeBuff, timeout=1)
+        if bytesRead == nBytes:
+            compTimeRead = True
+            readTime = pyb.micros()
 
-        while not compTimeRead:
-            bytesRead = usb_vcp.recv(compTimeBuff, timeout=1)
-            if bytesRead == nBytes:
-                compTimeRead = True
-                readTime = pyb.micros()
-
+    while compTimeRead:
         ######################################
         # Time has been read. Parse to string
         # to name movie folder.
@@ -111,5 +110,4 @@ while(True):
         stats.write("\r\nend\t")
         stats.write(vidEndStr)
         stats.close()
-        tagRead = False
-        connected = False
+        compTimeRead = False

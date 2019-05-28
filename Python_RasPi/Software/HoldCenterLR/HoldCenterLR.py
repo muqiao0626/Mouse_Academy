@@ -49,7 +49,7 @@ def runProtocol(bpodPort, reportCard):
     import datetime
     import time
     myBpod = BpodObject(bpodPort)
-    myBpod.set_protocol('HoldCenter')
+    myBpod.set_protocol('HoldCenterLR')
     import numpy as np
 
     d = datetime.date.today()
@@ -60,24 +60,24 @@ def runProtocol(bpodPort, reportCard):
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
     minPerformance = 0.75
-    timeout = 5
-    maxHoldTime = 400
-    holdTimes = [ht for ht in range(0, maxHoldTime+1, 25)]
+    timeout = 1
+    maxHoldTime = 500
+    holdTimes = [ht for ht in range(400, maxHoldTime+1, 25)]
     
     try:
-        perfDictStr = reportCard.performance['HoldCenter']
+        perfDictStr = reportCard.performance['HoldCenterLR']
         perfDict = {}
         for htstr in list(perfDictStr.keys()):
             htint = int(htstr)
             perfDict[htint] = perfDictStr[htstr]
     except KeyError:
-        reportCard.performance.update({'HoldCenter':{}})
+        reportCard.performance.update({'HoldCenterLR':{}})
         perfDict = {ms:0 for ms in holdTimes}
         perfDictStr = {str(ms):0 for ms in holdTimes}
-        reportCard.performance['HoldCenter'].update(perfDictStr)
+        reportCard.performance['HoldCenterLR'].update(perfDictStr)
     #find hold time
     #(max hold time with performance > 70%)
-    holdTime = 0
+    holdTime = 400
     htidx = 0
     if perfDict[maxHoldTime] > minPerformance:
         holdTime = maxHoldTime
@@ -88,7 +88,7 @@ def runProtocol(bpodPort, reportCard):
             holdTime = holdTimes[htidx]
     print('Hold Time:', holdTime) 
  
-    sessionDurationMinutes = 2
+    sessionDurationMinutes = 5
     rewardAmount = 2
     LeftPort = int(1)
     CenterPort = int(2)
@@ -116,6 +116,8 @@ def runProtocol(bpodPort, reportCard):
     
     sessionWater = 0
     numRewards = 0
+    numRewardsL = 0
+    numRewardsR = 0
     maxWater = reportCard.maxWater
     waterToday = reportCard.getWaterToday()
     withdrawal = True
@@ -146,8 +148,23 @@ def runProtocol(bpodPort, reportCard):
         
         sma.addState('Name', 'RewardCenter',
                  'Timer', valveTimes[1],
-                 'StateChangeConditions', ('Tup', 'ExitPause'),
+                 'StateChangeConditions', ('Tup', 'WaitForChoice'),
                  'OutputActions', ('ValveState', centerPortBin))
+        
+        sma.addState('Name', 'WaitForChoice',
+                 'Timer', 0,
+                 'StateChangeConditions', (leftPortIn, 'RewardLeft', rightPortIn, 'RewardRight'),
+                 'OutputActions', ())
+        
+        sma.addState('Name', 'RewardLeft',
+                 'Timer', valveTimes[0],
+                 'StateChangeConditions', ('Tup', 'exit'),
+                 'OutputActions', ('ValveState', leftPortBin))
+        
+        sma.addState('Name', 'RewardRight',
+                 'Timer', valveTimes[2],
+                 'StateChangeConditions', ('Tup', 'exit'),
+                 'OutputActions', ('ValveState', rightPortBin))
         
         sma.addState('Name', 'ExitPause',
                      'Timer', exitPauseTime,
@@ -163,12 +180,22 @@ def runProtocol(bpodPort, reportCard):
         
         #Find reward times to update session water
         rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'RewardCenter')
+        rewardTimesL = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'RewardLeft')
+        rewardTimesR = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'RewardRight')
         rewarded = rewardTimes[0][0]>0
+        rewardedL = rewardTimesL[0][0]>0
+        rewardedR = rewardTimesR[0][0]>0
         
         #if correct and water rewarded, update water and reset streak
         if rewarded:
             sessionWater += 0.001*rewardAmount
             numRewards += 1
+        if rewardedL:
+            sessionWater += 0.001*rewardAmount
+            numRewardsL += 1
+        if rewardedR:
+            sessionWater += 0.001*rewardAmount
+            numRewardsR += 1
 
         elapsed_time = time.time()-startTime
         currentTrial = currentTrial+1
@@ -189,6 +216,8 @@ def runProtocol(bpodPort, reportCard):
     reportCard.save()
     myBpod.updateSettings({
                             "Rewards":numRewards,
+                            "Left Rewards":numRewardsL,
+                            "Right Rewards":numRewardsR,
                             "nTrials": actualTrials})
     myBpod.saveSessionData()
     # Disconnect Bpod

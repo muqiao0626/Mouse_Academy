@@ -60,7 +60,9 @@ def runProtocol(bpodPort, reportCard):
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
     
-    sessionDurationMinutes = 10
+    sessionDurationMinutes = 20
+    timeout = 2
+    holdTime = 500
     
     minReward = 2
     maxReward = 4
@@ -84,6 +86,7 @@ def runProtocol(bpodPort, reportCard):
 
     leftPortIn = 'Port%dIn' % LeftPort
     centerPortIn = 'Port%dIn' % CenterPort
+    centerPortOut = 'Port%dOut' % CenterPort
     rightPortIn = 'Port%dIn' % RightPort
     leftPortBin = 1
     centerPortBin = 2
@@ -142,6 +145,8 @@ def runProtocol(bpodPort, reportCard):
     myBpod.updateSettings({
                            "Left Amount (ul)": leftRewardAmount,
                            "Right Amount (ul)": rightRewardAmount,
+                           "Timeout (s)": timeout,
+                           "Hold Time (ms)": holdTime,
                            "Session Duration (min)": sessionDurationMinutes
                            })
     
@@ -175,28 +180,44 @@ def runProtocol(bpodPort, reportCard):
         
         sma.addState('Name', 'WaitForInit',
                      'Timer', 0,
-                     'StateChangeConditions', (centerPortIn, 'WaitForChoice'),
+                     'StateChangeConditions', (centerPortIn, 'Poked'),
                      'OutputActions', ())
+        
+        sma.addState('Name', 'Poked',
+                     'Timer', 0.001*holdTime,
+                     'StateChangeConditions', ('Tup', 'CenterClick', centerPortOut, 'EarlyRelease'),
+                     'OutputActions', ())
+        
+        sma.addState('Name', 'CenterClick',
+                     'Timer', valveTimes['Min']['Center'],
+                     'StateChangeConditions', ('Tup', 'WaitForChoice'),
+                     'OutputActions', ('ValveState', centerPortBin))
+        
+        sma.addState('Name', 'EarlyRelease',
+                     'Timer', timeout,
+                     'StateChangeConditions', ('Tup', 'exit'),
+                     'OutputActions', ())
+        
         sma.addState('Name', 'WaitForChoice',
                      'Timer', 0,
                      'StateChangeConditions', (leftPortIn, rewardOrPauseLeft, rightPortIn, rewardOrPauseRight),
                      'OutputActions', ())
 
         sma.addState('Name', 'RewardLeft',
-                 'Timer', valveTimes['Max']['Left'],
+                 'Timer', valveTimes['Min']['Left'],
                  'StateChangeConditions', ('Tup', 'exit'),
                  'OutputActions', ('ValveState', leftPortBin))
         sma.addState('Name', 'NoRewardLeft',
-                     'Timer', valveTimes['Max']['Left'],
+                     'Timer', valveTimes['Min']['Left'],
                      'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ())
         
         sma.addState('Name', 'RewardRight',
-                 'Timer', valveTimes['Max']['Right'],
+                 'Timer', valveTimes['Min']['Right'],
                  'StateChangeConditions', ('Tup', 'exit'),
                  'OutputActions', ('ValveState', rightPortBin))
         sma.addState('Name', 'NoRewardRight',
-                     'Timer', valveTimes['Max']['Right'],
+                     'Timer', valveTimes['Min']['Right'],
                      'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ())
     
