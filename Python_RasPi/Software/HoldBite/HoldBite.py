@@ -60,10 +60,10 @@ def runProtocol(bpodPort, reportCard):
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
     rewardAmount = 8
-    sessionDurationMinutes = 3
-    timeoutDur = 5
+    sessionDurationMinutes = 10
+    timeoutDur = 0
     maxHoldTime = 400
-    holdTimes = [ht for ht in range(0, maxHoldTime+1, 25)]
+    holdTimes = [ht for ht in range(0, maxHoldTime+1, 20)]
     
     try:
         perfDictStr = reportCard.performance['HoldBite']
@@ -82,7 +82,7 @@ def runProtocol(bpodPort, reportCard):
     htidx = 0
     if perfDict[maxHoldTime] > 0.70:
         holdTime = maxHoldTime
-        reportCard.setCurrentProtocol('PatchBite')
+        reportCard.setCurrentProtocol('HoldBite')
     else:
         while perfDict[holdTime] > 0.70:
             htidx += 1
@@ -107,6 +107,7 @@ def runProtocol(bpodPort, reportCard):
     sessionWater = 0
     maxWater = reportCard.maxWater
     waterToday = reportCard.getWaterToday()
+    numRewards = 0
 
     startTime = time.time()
     elapsed_time = 0
@@ -154,9 +155,11 @@ def runProtocol(bpodPort, reportCard):
         #Find reward times to update session water
         rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardBite')
         rewarded = rewardTimes[0][0]>0
+
         
         #if correct and water rewarded, update water and reset streak
         if rewarded:
+            numRewards += 1
             sessionWater += 0.001*rewardAmount
             
 
@@ -170,6 +173,13 @@ def runProtocol(bpodPort, reportCard):
     print('Session water:', sessionWater)
     myBpod.saveSessionData()
 
+    actualTrials = currentTrial-1
+    performance = numRewards/actualTrials
+    print('%d rewards in %d trials (%.02f)' % (numRewards, actualTrials, performance))
+    if currentTrial >=30:
+        perfDictStr.update({str(holdTime):performance})
+                
+    reportCard.performance['HoldBite'].update(perfDictStr)   
     reportCard.drankWater(sessionWater, myBpod.currentDataFile)
     reportCard.save()
     # Disconnect Bpod
