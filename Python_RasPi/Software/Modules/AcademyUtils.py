@@ -176,6 +176,20 @@ def findBpodProgPort():
     else:
         raise DeviceError('Arduino Due Programming Port not found.')
     
+def findUnoPort():
+    foundUnoPort = False
+    devices = getDevices()
+    for device in devices:
+        portname = devices[device]
+        if 'Arduino Uno' in device:
+            unoPort = portname
+            foundUnoPort = True
+            break
+    if foundUnoPort:
+        return unoPort
+    else:
+        raise DeviceError('Arduino Uno Port not found.')
+    
 #determine portname for arduino mega because it doesn't
 #have a device name for some reason
 def findMegaPort():
