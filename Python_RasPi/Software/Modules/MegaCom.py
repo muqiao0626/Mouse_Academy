@@ -18,6 +18,7 @@ import argparse
 import traceback
 import serial
 import time
+from datetime import datetime
 import re
 import AcademyUtils
 import numpy as np
@@ -77,11 +78,68 @@ def getMegaSer(megaPort=None):
     
     return megaSer
 
+def getUnoSer(unoPort=None):
+    if unoPort is None:
+        unoPort = AcademyUtils.findUnoPort()
+    unoSer = serial.Serial(unoPort, 9600, timeout=1)
+    try:
+        initMsg = unoSer.readline().decode().strip()
+    except Exception as e:
+        raise ReadError('No Initialization message:\n%s' %e)
+    time.sleep(0.05)
+    
+    return unoSer
+
 def resetMega(megaSer):
     megaSer.close()
     newSer = getMegaSer()
     return newSer
 
+#write two-byte code for reading tag from RFID reader serial input
+def beginLogging(unoSer):
+    startTime = time.time()
+    startTimeObj = datetime.fromtimestamp(startTime)
+    compTime = int(1000*startTime)
+    unoSer.write('51'.encode())
+    unoSer.write(str(compTime).encode())
+    
+    beginMsg = False
+    for check in range(3):
+        time.sleep(0.05)
+        msgstr = unoSer.readline()
+        #print(msgstr)
+        try:
+            msgstr = msgstr.decode().strip()
+        except UnicodeDecodeError:
+            print('UnicodeDecodeError:', msgstr)
+            msgstr = ''
+        beginMsg = "begin logging" in msgstr.lower()
+        if beginMsg:
+            break
+    if not beginMsg:
+        raise ReadError('Did not receive message indicating logging begun:\n%s' %msgstr)
+    
+    #write two-byte code for reading tag from RFID reader serial input
+def endLogging(unoSer):
+    commandStr = '50'
+    unoSer.write(commandStr.encode())
+    
+    endMsg = False
+    for check in range(3):
+        time.sleep(0.05)
+        msgstr = unoSer.readline()
+        #print(msgstr)
+        try:
+            msgstr = msgstr.decode().strip()
+        except UnicodeDecodeError:
+            print('UnicodeDecodeError:', msgstr)
+            msgstr = ''
+        endMsg = "end logging" in msgstr.lower()
+        if endMsg:
+            break
+    if not endMsg:
+        raise ReadError('Did not receive message indicating logging ended:\n%s' %msgstr)
+    
 #write two-byte code for reading tag from RFID reader serial input
 def readTag(megaSer, readerNum):
     megaSer.reset_output_buffer()
