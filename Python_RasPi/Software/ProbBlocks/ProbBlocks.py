@@ -66,11 +66,13 @@ def runProtocol(bpodPort, reportCard):
     
     minReward = 2
     maxReward = 4
+    centerRewardAmount = 0.5
     LeftPort = int(1)
     CenterPort = int(2)
     RightPort = int(3)
     minValveTimes = myBpod.getValveTimes(minReward, [LeftPort, CenterPort, RightPort])
     maxValveTimes = myBpod.getValveTimes(maxReward, [LeftPort, CenterPort, RightPort])
+    centerClickTime = myBpod.getValveTimes(centerRewardAmount, [CenterPort])[0]
     valveTimes = {
         'Min':{
             'Left': minValveTimes[0],
@@ -165,12 +167,22 @@ def runProtocol(bpodPort, reportCard):
     
         if leftRewardsLong[currentTrial-1]:
             rewardOrPauseLeft = 'RewardLeft'
+            leftRewardStr = 'reward available'
+            leftRewardAvailable = True
         else:
             rewardOrPauseLeft = 'NoRewardLeft'
+            leftNoStr = 'no reward available'
+            leftRewardAvailable = False
+            
         if rightRewardsLong[currentTrial-1]:
             rewardOrPauseRight = 'RewardRight'
+            rightRewardStr = 'reward available'
+            rightRewardAvailable = True
         else:
             rewardOrPauseRight = 'NoRewardRight'
+            rightRewardStr = 'no reward available'
+            rightRewardAvailable = False
+            
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
@@ -231,26 +243,16 @@ def runProtocol(bpodPort, reportCard):
         #Find reward times to update session water
         leftRewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'RewardLeft')
         rightRewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'RewardRight')
+        centerRewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'CenterClick')
         rewardedLeft = leftRewardTimes[0][0]>0
         rewardedRight = rightRewardTimes[0][0]>0
+        rewardedCenter = centerRewardTimes[0][0]>0
         
         rewarded = False
-        if rewardedLeft:
-            rewarded = True
-            print('Left Reward!')
-        if rewardedRight:
-            rewarded = True
-            print('Right Reward!')
 
-
-    #    try:
-     #       withdrawalTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'Withdrawal')
-     #       withdrawal = withdrawalTimes[0][0]>0
-     #   except AttributeError:
-     #       withdrawal = False
-
-        
         #if correct and water rewarded, update water and reset streak
+        if rewardedCenter:
+            sessionWater += 0.001*centerRewardAmount
         if rewardedLeft:
             sessionWater += 0.001*leftRewardAmount
         if rewardedRight:
@@ -259,8 +261,19 @@ def runProtocol(bpodPort, reportCard):
         elapsed_time = time.time()-startTime
         currentTrial = currentTrial+1
         
+        if rewardedCenter:
+            print('CenterReward!')
+        if rewardedLeft:
+            rewarded = True
+            print('Left Reward!')
+        if rewardedRight:
+            rewarded = True
+            print('Right Reward!')
+            
+        print('Session Water:', sessionWater)
+        
         if sessionWater+waterToday >= maxWater:
-            print('reached maxWater (%d)' % maxWater)
+            print('reached maxWater (%f)' % maxWater)
             break
             
     print('Session water:', sessionWater)

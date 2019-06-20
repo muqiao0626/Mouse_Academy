@@ -59,24 +59,24 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    minPerformance = 0.75
+    minPerformance = 0.9
     timeout = 1
     maxHoldTime = 500
     holdTimes = [ht for ht in range(400, maxHoldTime+1, 25)]
     
     try:
-        perfDictStr = reportCard.performance['HoldCenterLR']
+        perfDictStr = reportCard.performance['HoldCenterLRProbs']
         perfDict = {}
         for htstr in list(perfDictStr.keys()):
             htint = int(htstr)
             perfDict[htint] = perfDictStr[htstr]
     except KeyError:
-        reportCard.performance.update({'HoldCenterLR':{}})
+        reportCard.performance.update({'HoldCenterLRProbs':{}})
         perfDict = {ms:0 for ms in holdTimes}
         perfDictStr = {str(ms):0 for ms in holdTimes}
-        reportCard.performance['HoldCenterLR'].update(perfDictStr)
+        reportCard.performance['HoldCenterLRProbs'].update(perfDictStr)
     #find hold time
-    #(max hold time with performance > 70%)
+    #(max hold time with performance > 75%)
     holdTime = 400
     htidx = 0
     if perfDict[maxHoldTime] > minPerformance:
@@ -86,14 +86,25 @@ def runProtocol(bpodPort, reportCard):
         while perfDict[holdTime] > minPerformance:
             htidx += 1
             holdTime = holdTimes[htidx]
-    print('Hold Time:', holdTime) 
+    print('Hold Time:', holdTime)
+    
+    leftProb = 0.50
+    rightProb = 0.50
+    leftRewardAmount = 2
+    rightRewardAmount = 2
+    centerRewardAmount = 0.5
+    LeftPort = int(1)
+    CenterPort = int(2)
+    RightPort = int(3)
+    leftValveTime = myBpod.getValveTimes(leftRewardAmount, [LeftPort])[0]
+    rightValveTime = myBpod.getValveTimes(rightRewardAmount, [RightPort])[0]
+    centerClickTime = myBpod.getValveTimes(centerRewardAmount, [CenterPort])[0]
  
     sessionDurationMinutes = 5
     rewardAmount = 2
     LeftPort = int(1)
     CenterPort = int(2)
     RightPort = int(3)
-    valveTimes = myBpod.getValveTimes(rewardAmount, [LeftPort, CenterPort, RightPort])
     leftPortIn = 'Port%dIn' % LeftPort
     centerPortIn = 'Port%dIn' % CenterPort
     centerPortOut = 'Port%dOut' % CenterPort
@@ -101,18 +112,21 @@ def runProtocol(bpodPort, reportCard):
     leftPortBin = 1
     centerPortBin = 2
     rightPortBin = 4
-    centerValveTime = valveTimes[1]
     
 
     myBpod.updateSettings({
-                           "Reward Amount (ul)": rewardAmount,
+                           "Left Reward Amount (ul)": leftRewardAmount,
+                           "Right Reward Amount (ul)": rightRewardAmount,
+                           "Center Reward Amount (ul)": centerRewardAmount,
+                           "LeftProb": leftProb,
+                           "RightProb": rightProb,
                            "Timeout (s)": timeout,
                            "Hold Time (ms)": holdTime,
                            "Session Duration (min)": sessionDurationMinutes
                            })
     
     currentTrial = 1
-    exitPauseTime = 1
+    exitPauseTime = 0.1
     
     sessionWater = 0
     numRewards = 0
@@ -126,10 +140,31 @@ def runProtocol(bpodPort, reportCard):
     elapsed_time = 0
     
     while elapsed_time < sessionDurationMinutes*60:
-    
+        leftRandNum = random.random()
+        rightRandNum = random.random()
+        if leftRandNum<leftProb:
+            rewardOrPauseLeft = 'RewardLeft'
+            leftRewardStr = 'reward available'
+            leftRewardAvailable = True
+        else:
+            rewardOrPauseLeft = 'NoRewardLeft'
+            leftNoStr = 'no reward available'
+            leftRewardAvailable = False
+            
+        if rightRandNum<rightProb:
+            rewardOrPauseRight = 'RewardRight'
+            rightRewardStr = 'reward available'
+            rightRewardAvailable = True
+        else:
+            rewardOrPauseRight = 'NoRewardRight'
+            rightRewardStr = 'no reward available'
+            rightRewardAvailable = False
+
         sma = stateMachine(myBpod) # Create a new state machine (events + outputs tailored for myBpod)
         
         print('Trial %d' % currentTrial)
+        print('Left Random Number: %f (%s)' % (leftRandNum, leftRewardStr))
+        print('Right Reward Number: %f (%s)' % (rightRandNum, rightRewardStr))
         
         sma.addState('Name', 'WaitForPoke',
                      'Timer', 0,
@@ -147,24 +182,34 @@ def runProtocol(bpodPort, reportCard):
                      'OutputActions', ())
         
         sma.addState('Name', 'RewardCenter',
-                 'Timer', valveTimes[1],
+                 'Timer', centerClickTime,
                  'StateChangeConditions', ('Tup', 'WaitForChoice'),
                  'OutputActions', ('ValveState', centerPortBin))
         
         sma.addState('Name', 'WaitForChoice',
                  'Timer', 0,
-                 'StateChangeConditions', (leftPortIn, 'RewardLeft', rightPortIn, 'RewardRight'),
+                 'StateChangeConditions', (leftPortIn, rewardOrPauseLeft, rightPortIn, rewardOrPauseRight),
                  'OutputActions', ())
         
         sma.addState('Name', 'RewardLeft',
-                 'Timer', valveTimes[0],
+                 'Timer', leftValveTime,
                  'StateChangeConditions', ('Tup', 'exit'),
                  'OutputActions', ('ValveState', leftPortBin))
         
+        sma.addState('Name', 'NoRewardLeft',
+                 'Timer', leftValveTime,
+                 'StateChangeConditions', ('Tup', 'exit'),
+                 'OutputActions', ())
+        
         sma.addState('Name', 'RewardRight',
-                 'Timer', valveTimes[2],
+                 'Timer', rightValveTime,
                  'StateChangeConditions', ('Tup', 'exit'),
                  'OutputActions', ('ValveState', rightPortBin))
+        
+        sma.addState('Name', 'NoRewardRight',
+                 'Timer', rightValveTime,
+                 'StateChangeConditions', ('Tup', 'exit'),
+                 'OutputActions', ())
         
         sma.addState('Name', 'ExitPause',
                      'Timer', exitPauseTime,
@@ -175,6 +220,12 @@ def runProtocol(bpodPort, reportCard):
         myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
         RawEvents = myBpod.runStateMachine() # Run state machine and return events
 
+        RawEvents.LeftRewardAvailable = []
+        RawEvents.LeftRewardAvailable.append(leftRewardAvailable)
+        
+        RawEvents.RightRewardAvailable = []
+        RawEvents.RightRewardAvailable.append(rightRewardAvailable)
+        
         myBpod.addTrialEvents(RawEvents)
         rawEventsDict = myBpod.structToDict(RawEvents)
         
@@ -201,7 +252,7 @@ def runProtocol(bpodPort, reportCard):
         currentTrial = currentTrial+1
         
         if sessionWater+waterToday >= maxWater:
-            print('reached maxWater (%d)' % maxWater)
+            print('reached maxWater (%f)' % maxWater)
             break
             
     print('Session water:', sessionWater)
@@ -211,7 +262,7 @@ def runProtocol(bpodPort, reportCard):
     if currentTrial >=30:
         perfDictStr.update({str(holdTime):performance})
                 
-    reportCard.performance['HoldCenterLR'].update(perfDictStr)    
+    reportCard.performance['HoldCenterLRProbs'].update(perfDictStr)    
     reportCard.drankWater(sessionWater, myBpod.currentDataFile)
     reportCard.save()
     myBpod.updateSettings({

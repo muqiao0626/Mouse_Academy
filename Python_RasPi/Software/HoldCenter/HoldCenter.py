@@ -59,7 +59,7 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    minPerformance = 0.75
+    minPerformance = 0.9
     timeout = 5
     maxHoldTime = 400
     holdTimes = [ht for ht in range(0, maxHoldTime+1, 25)]
@@ -81,14 +81,14 @@ def runProtocol(bpodPort, reportCard):
     htidx = 0
     if perfDict[maxHoldTime] > minPerformance:
         holdTime = maxHoldTime
-        reportCard.setCurrentProtocol('ProbBlocks')
+        reportCard.setCurrentProtocol('HoldCenterLRProbs')
     else:
         while perfDict[holdTime] > minPerformance:
             htidx += 1
             holdTime = holdTimes[htidx]
     print('Hold Time:', holdTime) 
  
-    sessionDurationMinutes = 2
+    sessionDurationMinutes = 5
     rewardAmount = 2
     LeftPort = int(1)
     CenterPort = int(2)
@@ -174,7 +174,7 @@ def runProtocol(bpodPort, reportCard):
         currentTrial = currentTrial+1
         
         if sessionWater+waterToday >= maxWater:
-            print('reached maxWater (%d)' % maxWater)
+            print('reached maxWater (%f)' % maxWater)
             break
             
     print('Session water:', sessionWater)
