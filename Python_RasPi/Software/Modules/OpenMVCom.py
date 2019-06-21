@@ -22,7 +22,15 @@ def connectAll():
     camSers = []
     connected = [False for x in range(numCams)]
     for camNum, camPort in enumerate(camPorts):
-        camSers = camSers + [serial.Serial(camPort, 9600, timeout=1)]
+        camSers = camSers + [serial.Serial(camPort,
+                                           baudrate=115200,
+                                           bytesize=serial.EIGHTBITS,
+                                           parity=serial.PARITY_NONE,
+                                           xonxoff=False,
+                                           rtscts=False,
+                                           stopbits=serial.STOPBITS_ONE,
+                                           timeout=None,
+                                           dsrdtr=True)]
         time.sleep(2)
         connectByte = camSers[camNum].read()
         connectMsg = int.from_bytes(connectByte, byteorder='little')

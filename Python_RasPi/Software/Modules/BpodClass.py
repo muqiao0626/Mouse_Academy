@@ -149,7 +149,7 @@ class BpodObject(object):
     
     def connect(self, serialPortName):
         from ArCOM import ArCOMObject # Import ArCOMObject
-        self.serialObject = ArCOMObject(serialPortName, 115200) # Create a new instance of an ArCOM serial port's
+        self.serialObject = ArCOMObject(serialPortName, 1312500) # Create a new instance of an ArCOM serial port's
         #self.resetSerialMessages()
         #self.serialObject.resetSerial()
         self.connectTime = datetime.datetime.now()
@@ -161,6 +161,14 @@ class BpodObject(object):
         self.serialObject.write(ord('F'), 'uint8') # Request firmware version
         self.firmwareVersion = self.serialObject.read(1,'uint16')
         self.machineType = self.serialObject.read(1,'uint16')
+        
+        '''TODO
+        print("MachineType:", self.machineType)
+        if self.machineType == 1:
+            serialBaudRate = 115200
+        else:
+            serialBaudRate = 1312500
+        '''
         if self.firmwareVersion < self.currentFirmwareVersion:
             raise BpodError('Error: Old firmware detected. Please update state machine firmware and try again.')
         elif self.firmwareVersion > self.currentFirmwareVersion:
