@@ -61,6 +61,7 @@ def startRecording(ser):
 def stopRecording(ser):
     ser.write('stop'.encode())
     actualStartTimeObj, endTimeObj = checkRecording(ser)
+    
     actualDuration = (endTimeObj - actualStartTimeObj).total_seconds()
     return actualStartTimeObj, endTimeObj, actualDuration
 
@@ -78,10 +79,14 @@ def stopRecordingAll(camSers):
     endTimeObjs = []
     actualDurations = []
     for camSer in camSers:
-        actualStartTimeObj, endTimeObj, actualDuration = stopRecording(camSer)
-        actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
-        endTimeObjs = endTimeObjs + [endTimeObj]
-        actualDurations = actualDurations + [actualDuration]
+        try:
+            actualStartTimeObj, endTimeObj, actualDuration = stopRecording(camSer)
+            actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
+            endTimeObjs = endTimeObjs + [endTimeObj]
+            actualDurations = actualDurations + [actualDuration]
+        
+        except Exception as e:
+            print('Camera failure:\n%s' %e)
         time.sleep(0.01)
     return actualStartTimeObjs, endTimeObjs, actualDurations
     
