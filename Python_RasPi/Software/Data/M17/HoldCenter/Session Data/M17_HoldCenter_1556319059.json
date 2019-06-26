@@ -1,0 +1,110 @@
+{
+  "Settings": {
+    "Hold Time (ms)": 25,
+    "Reward Amount (ul)": 2,
+    "Rewards": 1,
+    "Session Duration (min)": 10,
+    "Timeout (s)": 2,
+    "nTrials": 1
+  },
+  "info": {
+    "BpodFirmwareVersion": 16
+  },
+  "nTrials": 1,
+  "rawData": [
+    {
+      "rawData": {
+        "EventTimestamps": [
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "Events": [
+          70,
+          108,
+          108,
+          71,
+          108
+        ],
+        "StateTimestamps": [
+          0,
+          429496.7295,
+          429496.7295,
+          429496.7295,
+          429496.7295
+        ],
+        "States": [
+          0,
+          1,
+          3,
+          4
+        ],
+        "TrialSentTimestamp": 1556319059.788131,
+        "TrialStartTimestamp": 0.138
+      }
+    }
+  ],
+  "rawEvents": {
+    "Trial": [
+      {
+        "Trial": {
+          "Events": {
+            "Port2In": [
+              429496.7295
+            ],
+            "Port2Out": [
+              429496.7295
+            ],
+            "Tup": [
+              429496.7295,
+              429496.7295,
+              429496.7295
+            ]
+          },
+          "States": {
+            "EarlyRelease": [
+              [
+                NaN,
+                NaN
+              ]
+            ],
+            "ExitPause": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "Poked": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "RewardCenter": [
+              [
+                429496.7295,
+                429496.7295
+              ]
+            ],
+            "WaitForPoke": [
+              [
+                0,
+                429496.7295
+              ]
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "sessionDateTime": "2019-04-26T15:50:59.552114",
+  "sessionStartTime": "2019-04-26 15:50:59.552114",
+  "trialSentTimestamp": [
+    1556319059.788131
+  ],
+  "trialStartTimestamp": [
+    0.138
+  ]
+}

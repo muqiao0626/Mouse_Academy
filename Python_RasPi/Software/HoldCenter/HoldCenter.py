@@ -59,8 +59,8 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    minPerformance = 0.9
-    timeout = 5
+    minPerformance = 0.7
+    timeout = 0.1
     maxHoldTime = 400
     holdTimes = [ht for ht in range(0, maxHoldTime+1, 25)]
     
@@ -89,7 +89,7 @@ def runProtocol(bpodPort, reportCard):
     print('Hold Time:', holdTime) 
  
     sessionDurationMinutes = 5
-    rewardAmount = 2
+    rewardAmount = 1
     LeftPort = int(1)
     CenterPort = int(2)
     RightPort = int(3)
@@ -154,9 +154,16 @@ def runProtocol(bpodPort, reportCard):
                      'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ())
     
-        
-        myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
-        RawEvents = myBpod.runStateMachine() # Run state machine and return events
+        try:
+            myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
+            RawEvents = myBpod.runStateMachine() # Run state machine and return events
+        except Exception as e:
+            print(e)
+            sessionDurationMinutes = 0.01*int(100*(time.time()-startTime)/60)
+            myBpod.updateSettings({
+                           "Session Duration (min)": sessionDurationMinutes
+                           })
+            break
 
         myBpod.addTrialEvents(RawEvents)
         rawEventsDict = myBpod.structToDict(RawEvents)
@@ -184,7 +191,9 @@ def runProtocol(bpodPort, reportCard):
     if currentTrial >=30:
         perfDictStr.update({str(holdTime):performance})
                 
-    reportCard.performance['HoldCenter'].update(perfDictStr)    
+    reportCard.performance['HoldCenter'].update(perfDictStr)
+    if perfDict[maxHoldTime] > minPerformance:
+        reportCard.setCurrentProtocol('HoldCenterLRProbs')
     reportCard.drankWater(sessionWater, myBpod.currentDataFile)
     reportCard.save()
     myBpod.updateSettings({
