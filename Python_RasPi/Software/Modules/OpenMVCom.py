@@ -6,7 +6,15 @@ import sys
 
 def connect():
     camPorts = AcademyUtils.getCamPorts()
-    camSer = serial.Serial(camPorts[0], 9600, timeout=1)
+    camSer = serial.Serial(camPorts[0],
+                           baudrate=115200,
+                           bytesize=serial.EIGHTBITS,
+                           parity=serial.PARITY_NONE,
+                           xonxoff=False,
+                           rtscts=False,
+                           stopbits=serial.STOPBITS_ONE,
+                           timeout=1,
+                           dsrdtr=True)
     time.sleep(2)
     connectByte = camSer.read()
     connectMsg = int.from_bytes(connectByte, byteorder='little')
@@ -29,7 +37,7 @@ def connectAll():
                                            xonxoff=False,
                                            rtscts=False,
                                            stopbits=serial.STOPBITS_ONE,
-                                           timeout=None,
+                                           timeout=1,
                                            dsrdtr=True)]
         time.sleep(2)
         connectByte = camSers[camNum].read()

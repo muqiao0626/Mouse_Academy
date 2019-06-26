@@ -1,4 +1,4 @@
-import OpenMVCom
+from OpenMVClass import OpenMVObject
 import AcademyUtils
 import BpodClass
 import importlib
@@ -16,21 +16,22 @@ megaPort = AcademyUtils.findMegaPort(devices)
 unoPort = AcademyUtils.findUnoPort(devices)
 devices.update({'Arduino Mega':megaPort})
 megaObj = MegaObject(megaPort, unoPort)
-
-camSers, connected = OpenMVCom.connectAll()
-compTimeObjs = OpenMVCom.startRecordingAll(camSers)
+OpenMVCom = OpenMVObject()
+OpenMVCom.startRecordingAll()
 
 protocol = rc.currentProtocol
 protocolModule = importlib.import_module('%s.%s' %(protocol,protocol))
 print('%s beginning protocol "%s"' %(subject, protocol))
 try:
-    myBpod, rc = protocolModule.runProtocol(bpodPort, rc, megaObj)
-except BpodError as e:
+    myBpod, rc, megaObj = protocolModule.runProtocol(bpodPort, rc, megaObj)
+except Exception as e:
     print("Bpod exception:\n%s" %e)
-    AcademyUtils.resetBpodPort()
+    bpodPort = AcademyUtils.resetBpodPort(bpodUSBPort=bpodPort)
+    '''
 except ReadError as e:
     print("Mega exception:\n%s" %e)
     megaObj.disconnect()
+    '''
 
-actualStartTimeObjs, endTimeObjs, durs = OpenMVCom.stopRecordingAll(camSers)
-OpenMVCom.disconnectAll(camSers)
+actualStartTimeObjs, endTimeObjs, durs = OpenMVCom.stopRecordingAll()
+OpenMVCom.disconnectAll()

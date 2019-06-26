@@ -46,37 +46,41 @@ class MegaObject(object):
         self.megaSer = self.getMegaSer()
         
         if self.unoPortName == None:
-            self.unoPortName = AcademyUtils.findMegaPort()
+            self.unoPortName = AcademyUtils.findUnoPort()
         self.unoSer = self.getUnoSer()
 
 
     def getMegaSer(self, megaPort=None):
         if megaPort is None:
             megaPort = self.megaPortName
-        megaSer = serial.Serial(megaPort, 9600, timeout=1)
+        self.megaSer = serial.Serial(megaPort, 9600, timeout=1)
         try:
-            setupMsg = megaSer.readline().decode().strip()
+            setupMsg = self.megaSer.readline().decode().strip()
         except Exception as e:
             raise ReadError('No setup message:\n%s' %e)
         time.sleep(0.05)
         try:
-            readyMsg = megaSer.readline().decode().strip()
+            readyMsg = self.megaSer.readline().decode().strip()
         except Exception as e:
             self.megaSer = None
     
-        return megaSer
+        return self.megaSer
 
     def getUnoSer(self, unoPort=None):
         if unoPort is None:
             unoPort = self.unoPortName
-        unoSer = serial.Serial(unoPort, 9600, timeout=1)
+        self.unoSer = serial.Serial(unoPort, 9600, timeout=1)
         try:
             initMsg = unoSer.readline().decode().strip()
         except Exception as e:
-            self.unoSer = None
+            try:
+                self.unoSer = serial.Serial(self.unoPortName, 9600, timeout=1)
+            except:
+                self.unoPortName = AcademyUtils.findUnoPort()
+                self.unoSer = serial.Serial(self.unoPortName, 9600, timeout=1)
         time.sleep(0.05)
     
-        return unoSer
+        return self.unoSer
 
     def resetMega(self, megaSer=None):
         if megaSer == None:
@@ -165,13 +169,16 @@ class MegaObject(object):
         #print(tagString)
     
         if readerNum == 1:
-            tag1 = searchForTag(tagString)
+            tag1 = self.searchForTag(tagString)
+            self.tag1 = tag1
             return tag1
         elif readerNum == 2:
-            tag2 = searchForTag(tagString)
+            tag2 = self.searchForTag(tagString)
+            self.tag2 = tag2
             return tag2
         elif readerNum == 3:
-            tag3 = searchForTag(tagString)
+            tag3 = self.searchForTag(tagString)
+            self.tag3 = tag3
             return tag3
         else:
             raise MegaComError('Error: readerNum must be 1, 2, or 3.')
@@ -199,7 +206,7 @@ class MegaObject(object):
             if elapsed > timeout:
                 return buffer
             else:
-                tagInBuffer = isTag(newTag)
+                tagInBuffer = self.isTag(newTag)
                 if tagInBuffer:
                     buffer = np.append(buffer, newTag)
             
@@ -287,6 +294,7 @@ class MegaObject(object):
 
     
     def resetMega(self):
+        print('Resetting Arduino Mega...')
         self.megaSer.close()
         self.megaSer = self.getMegaSer()
         if door1open:
@@ -304,10 +312,11 @@ class MegaObject(object):
         return self.megaSer
     
     def resetUno(self):
+        print('Resetting Arduino Uno...')
         self.unoSer.close()
-        self.unoSer = self.getMegaSer()
+        self.unoSer = self.getUnoSer()
         self.isLogging = False
-        return self.unoSer
+        return self
     
     def searchForTag(self, searchString):
         try:

@@ -96,8 +96,9 @@ def getDevices():
         devices.update({dname:portName})
     return devices
 
-def printDevices():
-    devices = getDevices()
+def printDevices(devices=None):
+    if not devices==None:
+        devices = getDevices()
     print('Devices:')
     for device in devices:
         portname = devices[device]
@@ -125,14 +126,24 @@ def findBpodUSBPort(devices=None):
     if foundBpodPort:
         return bpodPort
     else:
+        printDevices(devices=devices)
         raise DeviceError('Arduino Due Native USB Port not found.')
     
-def resetBpodPort(bpodResetPort=None):
-    if bpodResetPort==None:
-        bpodResetPort = findBpodProgPort()
-    resetSer = serial.Serial(bpodResetPort, 9600, timeout=0)
-    time.sleep(0.01)
-    resetSer.close()
+def resetBpod(bpodUSBPort=None):
+    if bpodUSBPort!=None:
+        try:
+            resetSer = serial.Serial(bpodUSBPort, 9600, timeout=0)
+            time.sleep(0.01)
+            resetSer.close()
+        except serial.serialutil.SerialException:#raised when port no longer available
+            bpodUSBPort = findBpodUSBPort()
+            resetSer = serial.Serial(bpodUSBPort, 9600, timeout=0)
+            time.sleep(0.01)
+            resetSer.close()
+    return bpodUSBPort
+            
+            
+    return bpodUSBPort
     ''' software fix for port reset
     myBpod = BpodObject(portName)
     rc = myBpod.set_subject('Reset')
