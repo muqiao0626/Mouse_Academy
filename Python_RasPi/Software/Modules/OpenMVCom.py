@@ -6,7 +6,15 @@ import sys
 
 def connect():
     camPorts = AcademyUtils.getCamPorts()
-    camSer = serial.Serial(camPorts[0], 9600, timeout=1)
+    camSer = serial.Serial(camPorts[0],
+                           baudrate=115200,
+                           bytesize=serial.EIGHTBITS,
+                           parity=serial.PARITY_NONE,
+                           xonxoff=False,
+                           rtscts=False,
+                           stopbits=serial.STOPBITS_ONE,
+                           timeout=1,
+                           dsrdtr=True)
     time.sleep(2)
     connectByte = camSer.read()
     connectMsg = int.from_bytes(connectByte, byteorder='little')
@@ -29,7 +37,7 @@ def connectAll():
                                            xonxoff=False,
                                            rtscts=False,
                                            stopbits=serial.STOPBITS_ONE,
-                                           timeout=None,
+                                           timeout=1,
                                            dsrdtr=True)]
         time.sleep(2)
         connectByte = camSers[camNum].read()
@@ -69,6 +77,7 @@ def startRecording(ser):
 def stopRecording(ser):
     ser.write('stop'.encode())
     actualStartTimeObj, endTimeObj = checkRecording(ser)
+    
     actualDuration = (endTimeObj - actualStartTimeObj).total_seconds()
     return actualStartTimeObj, endTimeObj, actualDuration
 
@@ -86,10 +95,14 @@ def stopRecordingAll(camSers):
     endTimeObjs = []
     actualDurations = []
     for camSer in camSers:
-        actualStartTimeObj, endTimeObj, actualDuration = stopRecording(camSer)
-        actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
-        endTimeObjs = endTimeObjs + [endTimeObj]
-        actualDurations = actualDurations + [actualDuration]
+        try:
+            actualStartTimeObj, endTimeObj, actualDuration = stopRecording(camSer)
+            actualStartTimeObjs = actualStartTimeObjs + [actualStartTimeObj]
+            endTimeObjs = endTimeObjs + [endTimeObj]
+            actualDurations = actualDurations + [actualDuration]
+        
+        except Exception as e:
+            print('Camera failure:\n%s' %e)
         time.sleep(0.01)
     return actualStartTimeObjs, endTimeObjs, actualDurations
     

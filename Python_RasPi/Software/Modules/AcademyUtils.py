@@ -96,8 +96,9 @@ def getDevices():
         devices.update({dname:portName})
     return devices
 
-def printDevices():
-    devices = getDevices()
+def printDevices(devices=None):
+    if not devices==None:
+        devices = getDevices()
     print('Devices:')
     for device in devices:
         portname = devices[device]
@@ -111,9 +112,10 @@ def resetSer(ser):
     ser.reset_output_buffer()
     ser.setDTR(True)
 
-def findBpodUSBPort():
+def findBpodUSBPort(devices=None):
     foundBpodPort = False
-    devices = getDevices()
+    if devices==None:
+        devices = getDevices()
     for device in devices:
         portname = devices[device]
         if 'Arduino Due' in device:
@@ -124,13 +126,24 @@ def findBpodUSBPort():
     if foundBpodPort:
         return bpodPort
     else:
+        printDevices(devices=devices)
         raise DeviceError('Arduino Due Native USB Port not found.')
     
-def resetBpodPort():
-    bpodResetPort = findBpodUSBPort()
-    resetSer = serial.Serial(bpodResetPort, 115200, timeout=0)
-    time.sleep(0.01)
-    resetSer.close()
+def resetBpod(bpodUSBPort=None):
+    if bpodUSBPort!=None:
+        try:
+            resetSer = serial.Serial(bpodUSBPort, 9600, timeout=0)
+            time.sleep(0.01)
+            resetSer.close()
+        except serial.serialutil.SerialException:#raised when port no longer available
+            bpodUSBPort = findBpodUSBPort()
+            resetSer = serial.Serial(bpodUSBPort, 9600, timeout=0)
+            time.sleep(0.01)
+            resetSer.close()
+    return bpodUSBPort
+            
+            
+    return bpodUSBPort
     ''' software fix for port reset
     myBpod = BpodObject(portName)
     rc = myBpod.set_subject('Reset')
@@ -161,9 +174,10 @@ def getCamPorts():
     else:
         raise DeviceError('OpenMV Cam USB COM Port not connected.')
     
-def findBpodProgPort():
+def findBpodProgPort(devices=None):
     foundBpodPort = False
-    devices = getDevices()
+    if devices==None:
+        devices = getDevices()
     for device in devices:
         portname = devices[device]
         if 'Arduino Due' in device:
@@ -176,9 +190,10 @@ def findBpodProgPort():
     else:
         raise DeviceError('Arduino Due Programming Port not found.')
     
-def findUnoPort():
+def findUnoPort(devices=None):
     foundUnoPort = False
-    devices = getDevices()
+    if devices==None:
+        devices = getDevices()
     for device in devices:
         portname = devices[device]
         if 'Arduino Uno' in device:
@@ -192,10 +207,15 @@ def findUnoPort():
     
 #determine portname for arduino mega because it doesn't
 #have a device name for some reason
-def findMegaPort():
-    devices = getDevices()
+def findMegaPort(devices=None):
+    if devices==None:
+        devices = getDevices()
     megaFound = False
     print('Looking for Arduino Mega...')
+    if 'Arduino Mega' in devices.keys():
+        megaFound = true
+        return devices['Arduino Mega']
+        
     for key in devices.keys():
         if 'tty' in key:
             print('Trying port %s...' % devices[key])

@@ -18,7 +18,7 @@ import os, sys
 import argparse
 import traceback
 from serial.tools.list_ports_linux import comports
-from Modules import BpodClass, StateMachineAssembler, AcademyUtils
+from Modules import BpodClass, StateMachineAssembler, AcademyUtils, MegaClass
 from ReportCardClass import ReportCard
 import json
 
@@ -41,13 +41,20 @@ def main(argv):
     myBpod, reportCard = runProtocol(bpodPort, mouse)
     return myBpod, reportCard
                 
-def runProtocol(bpodPort, reportCard):
+def runProtocol(bpodPort, reportCard, megaObj=None):
     # Initializing Bpod
     from BpodClass import BpodObject # Import BpodObject
+    from MegaClass import MegaObject
     from StateMachineAssembler import stateMachine # Import state machine assembler
     import random
     import datetime
     import time
+    
+    if megaObj == None:
+        passedMegaObj = False
+        megaObj = MegaObject()
+    else:
+        passedMegaObj = True
     myBpod = BpodObject(bpodPort)
     myBpod.set_protocol('HoldBite')
     import numpy as np
@@ -59,34 +66,48 @@ def runProtocol(bpodPort, reportCard):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    rewardAmount = 8
-    sessionDurationMinutes = 10
-    timeoutDur = 0
+    rewardAmount = 1
+    sessionDurationMinutes = 8
+    biteEvent = 'Wire1In'
+    releaseEvent='Wire1Out'
+    timeoutDur = 0.5
     maxHoldTime = 400
     holdTimes = [ht for ht in range(0, maxHoldTime+1, 20)]
     
-    try:
+    if 'HoldBite' in reportCard.performance.keys():
         perfDictStr = reportCard.performance['HoldBite']
         perfDict = {}
         for htstr in list(perfDictStr.keys()):
             htint = int(htstr)
             perfDict[htint] = perfDictStr[htstr]
-    except KeyError:
+    else:
         reportCard.performance.update({'HoldBite':{}})
         perfDict = {ms:0 for ms in holdTimes}
         perfDictStr = {str(ms):0 for ms in holdTimes}
         reportCard.performance['HoldBite'].update(perfDictStr)
+        reportCard.save()
     #find hold time
-    #(max hold time with performance > 70%)
+    #(max hold time with performance > minPerformance)
+    minPerformance = 0.6
     holdTime = 0
     htidx = 0
-    if perfDict[maxHoldTime] > 0.70:
+    if perfDict[maxHoldTime] > minPerformance:
         holdTime = maxHoldTime
         reportCard.setCurrentProtocol('HoldBite')
     else:
-        while perfDict[holdTime] > 0.70:
-            htidx += 1
-            holdTime = holdTimes[htidx]
+        completedHoldTime = True
+        while completedHoldTime:
+            try:
+                completedHoldTime = perfDict[holdTime] > minPerformance
+                if completedHoldTime:
+                    htidx += 1
+                    holdTime = holdTimes[htidx]
+            except KeyError:
+                perfDict.update({holdTime:0})
+                perfDictStr.update({str(holdTime):0})
+                reportCard.performance['HoldBite'].update(perfDictStr)
+                reportCard.save()
+                completedHoldTime = False
     print('Hold Time:', holdTime)
     
     valveTimes = myBpod.getValveTimes(rewardAmount, [1])
@@ -98,8 +119,10 @@ def runProtocol(bpodPort, reportCard):
     centerValveTime = valveTimes[0]
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Hold Time (s)": holdTime,
-                           "Timeout:":timeoutDur,
-                           "Session Duration (min)": sessionDurationMinutes})
+                           "Timeout":timeoutDur,
+                           "Session Duration (min)": sessionDurationMinutes,
+                           "Bite Event": biteEvent,
+                           "Release Event": releaseEvent})
     
     currentTrial = 0
     exitPauseTime = 1
@@ -108,6 +131,17 @@ def runProtocol(bpodPort, reportCard):
     maxWater = reportCard.maxWater
     waterToday = reportCard.getWaterToday()
     numRewards = 0
+    
+    try:
+        megaObj.beginLogging()
+    except Exception as e:
+        print('could not begin logging', e)
+        print('Resetting uno...')
+        try:
+            megaObj = megaObj.resetUno()
+            megaObj.beginLogging()
+        except Exception as e2:
+            print(e2)
 
     startTime = time.time()
     elapsed_time = 0
@@ -118,16 +152,16 @@ def runProtocol(bpodPort, reportCard):
         sma = stateMachine(myBpod) 
         sma.addState('Name', 'WaitForBite',
                      'Timer', 0,
-                     'StateChangeConditions', ('Wire1Out', 'Bitten'),
+                     'StateChangeConditions', (biteEvent, 'Bitten'),
                      'OutputActions', ())
                      
         sma.addState('Name', 'Bitten',
                  'Timer', 0.001*holdTime,
-                 'StateChangeConditions', ('Wire1In', 'EarlyRelease', 'Tup', 'WaitForRelease'),
+                 'StateChangeConditions', (releaseEvent, 'EarlyRelease', 'Tup', 'WaitForRelease'),
                  'OutputActions', ('SoftCode', 1))
         sma.addState('Name', 'WaitForRelease',
                      'Timer', 5,
-                     'StateChangeConditions', ('Wire1In', 'Released', 'Tup', 'Stuck'),
+                     'StateChangeConditions', (releaseEvent, 'Released', 'Tup', 'Stuck'),
                      'OutputActions', ())
         sma.addState('Name', 'Stuck',
                      'Timer', 0.01,
@@ -147,8 +181,13 @@ def runProtocol(bpodPort, reportCard):
                      'OutputActions', ('SoftCode', 3))
 
     
-        trial += 1        
-        myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
+        trial += 1
+        try:
+            myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
+        except Exception as e:
+            print(e)
+            sessionDurationMinutes = 0.01*int(100*(time.time() - startTime)/60)
+            myBpod.updateSettings({"Session Duration (min)": sessionDurationMinutes})
         RawEvents = myBpod.runStateMachine() # Run state machine and return events
         myBpod.addTrialEvents(RawEvents)
         elapsed_time = time.time() - startTime
@@ -173,7 +212,7 @@ def runProtocol(bpodPort, reportCard):
     print('Session water:', sessionWater)
     myBpod.saveSessionData()
 
-    actualTrials = currentTrial-1
+    actualTrials = currentTrial
     performance = numRewards/actualTrials
     print('%d rewards in %d trials (%.02f)' % (numRewards, actualTrials, performance))
     if currentTrial >=30:
@@ -184,7 +223,11 @@ def runProtocol(bpodPort, reportCard):
     reportCard.save()
     # Disconnect Bpod
     myBpod.disconnect() # Sends a termination byte and closes the serial port. PulsePal stores current params to its EEPROM.
-    return myBpod, reportCard
+    if megaObj.isLogging:
+        megaObj.endLogging()
+    if not passedMegaObj:
+        megaObj.disconnect()
+    return myBpod, reportCard, megaObj
 
 if __name__ == "__main__":
     main(sys.argv[1:])
