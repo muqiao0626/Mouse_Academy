@@ -80,11 +80,13 @@ void loop() {
     }
     else{
       char idRead = Serial.read();
+      //nonsense byte
       if (idRead != '1') {
         idRead = 0;
       }
+      //LOG COMMAND RECEIVED
         else{
-        
+        //find time stamp when arduino reads begin log command
         previousMicros = micros();
         int byteCount = 0;
         while (byteCount < numTimeBytes){
@@ -115,6 +117,8 @@ void loop() {
         logging = true;
         //print message
         Serial.println(beginLogMsg);
+
+        //open data file, write timestamp (from Raspberry Pi)
         File dataFile = SD.open(fileName, FILE_WRITE);
         dataFile.println(timeChar);
 
@@ -125,6 +129,7 @@ void loop() {
           //rate, write sample immediately
           if (stamp >= interval){
             previousMicros = currentMicros;
+            
             // make a string for assembling the data to log:
             String dataString = String(stamp);
             dataString += ",";
@@ -182,5 +187,5 @@ void loop() {
     }
   }
 }
-    delay(10);
+    delayMicroseconds(10);
 }
