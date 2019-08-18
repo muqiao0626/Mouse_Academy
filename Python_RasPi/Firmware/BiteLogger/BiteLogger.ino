@@ -30,7 +30,9 @@ const int numTimeBytes = 13;
 const char beginLogMsg[14] = "begin logging";
 const char endLogMsg[12] = "end logging";
 
-long previousMicros = 0;
+unsigned long previousMicros;
+unsigned long currentMicros;
+unsigned long stamp;
 int fileTag = 0;
 long interval = 500; //Microseconds
 char zeroTime[14] = "0000000000000";
@@ -73,7 +75,7 @@ void loop() {
   if (Serial.available() >= 2) {
     char commandRead = Serial.read();
     //CHECKING FOR LOG COMMAND
-    if (commandRead != '5') {
+    if (commandRead != '4') {
       commandRead = 0;
     }
     else{
@@ -117,8 +119,10 @@ void loop() {
         dataFile.println(timeChar);
 
         while (logging==true) {
-          unsigned long currentMicros = micros();
-          unsigned long stamp = (unsigned long)(currentMicros - previousMicros);
+          currentMicros = micros();
+          stamp = (unsigned long)(currentMicros - previousMicros);
+          //if actual sampling rate slower than desired sampling
+          //rate, write sample immediately
           if (stamp >= interval){
             previousMicros = currentMicros;
             // make a string for assembling the data to log:
@@ -146,12 +150,18 @@ void loop() {
             }
 
         }
+        //if actual sampling rate faster than desired sampling
+        //rate, delay
+        else{
+          unsigned long delayMicros = interval - stamp;
+          delayMicroseconds(delayMicros);
+        }
         
           //Check for end msg
           if (Serial.available() >= 2) {
     commandRead = Serial.read();
     //CHECKING FOR LOG COMMAND
-    if (commandRead != '5') {
+    if (commandRead != '4') {
       commandRead = 0;
     }
     else{
