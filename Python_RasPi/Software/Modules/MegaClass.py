@@ -121,8 +121,12 @@ class MegaObject(object):
     def endLogging(self, unoSer=None):
         if unoSer==None:
             unoSer = self.unoSer
+        endTime = time.time()
+        endTimeObj = datetime.fromtimestamp(endTime)
+        compTime = int(1000*endTime)
         commandStr = '40'
         unoSer.write(commandStr.encode())
+        unoSer.write(str(compTime).encode())
 
         endMsg = False
         for check in range(3):
