@@ -1,6 +1,6 @@
 /*
  * 
- * BiteLogger 06/15/19
+ * BiteLogger 08/22/19
   SD card datalogger
 
  This example shows how to log data from three analog sensors
@@ -164,25 +164,35 @@ void loop() {
         
           //Check for end msg
           if (Serial.available() >= 2) {
-    commandRead = Serial.read();
-    //CHECKING FOR LOG COMMAND
-    if (commandRead != '4') {
-      commandRead = 0;
-    }
-    else{
-      char idRead = Serial.read();
-      if (idRead != '0') {
-        idRead = 1;
-      }
-        else{
-                logging = false;
-              dataFile.close();
-                Serial.println(endLogMsg);
+            commandRead = Serial.read();
+            //CHECKING FOR LOG COMMAND
+              if (commandRead != '4') {
                 commandRead = 0;
-                idRead = 0;
               }
+          else{
+            char idRead = Serial.read();
+            if (idRead != '0') {
+              idRead = 1;
+            }
+            else{
+              logging = false;
+              //read end timestamp
+              int byteCount = 0;
+              while (byteCount < numTimeBytes){
+                char readByte = Serial.read();
+                if (isDigit(readByte)){
+                  timeChar[byteCount] = readByte;
+                  byteCount += 1;
+                }
+              }
+              dataFile.println(timeChar);
+              dataFile.close();
+              Serial.println(endLogMsg);
+              commandRead = 0;
+              idRead = 0;
             }
           }
+        }
       }
     }
   }
