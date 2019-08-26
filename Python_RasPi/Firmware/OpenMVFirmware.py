@@ -1,5 +1,5 @@
 '''
-05/26/19
+08/23/19
 Copyright (C) 2018 Meister Lab at Caltech
 -----------------------------------------------------
 This program is free software: you can redistribute it and/or modify
@@ -25,6 +25,7 @@ RED_LED_PIN = 1
 BLUE_LED_PIN = 3
 sensor.set_pixformat(sensor.GRAYSCALE) # or sensor.GRAYSCALE
 sensor.set_framesize(sensor.VGA) # or sensor.QQVGA (or others)
+sensor.set_windowing((120, 160))
 sensor.skip_frames(time = 2000) # Let new settings take affect.
 
 # create a new USB_VCP object
@@ -81,7 +82,6 @@ while(True):
 
         # Find time elapsed since start signal was read.
         recordLatency = pyb.elapsed_micros(readTime)
-        i = 0
         while not endRead:
             #capture 5 frames before checking for end signal
             for x in range(5):
@@ -90,7 +90,6 @@ while(True):
                 img.save(compTimeStr + "/" + "%06d.jpg" % i)
                 f.write(str(frameStart + recordLatency))
                 f.write('\r\n')
-                i += 1
                 pyb.delay(15)
             endBytesRead = usb_vcp.recv(endReadBuff, timeout=0)
             if endReadBuff==b'stop':
