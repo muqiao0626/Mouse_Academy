@@ -1,5 +1,5 @@
 '''
-08/23/19
+08/28/19
 Copyright (C) 2018 Meister Lab at Caltech
 -----------------------------------------------------
 This program is free software: you can redistribute it and/or modify
@@ -26,6 +26,15 @@ BLUE_LED_PIN = 3
 sensor.set_pixformat(sensor.GRAYSCALE) # or sensor.GRAYSCALE
 sensor.set_framesize(sensor.VGA) # or sensor.QQVGA (or others)
 sensor.set_windowing((120, 160))
+
+sensor.set_auto_gain(False)
+sensor.set_auto_whitebal(False)
+# Need to let the above settings get in...
+sensor.skip_frames(time = 500)
+current_exposure_time_in_microseconds = sensor.get_exposure_us()
+sensor.set_auto_exposure(False, \
+    exposure_us = 500)
+
 sensor.skip_frames(time = 2000) # Let new settings take affect.
 
 # create a new USB_VCP object
