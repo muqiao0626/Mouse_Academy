@@ -115,13 +115,6 @@ def main():
     while elapsed_time < 12*3600 and anyAllowed:
     #try readers 1 and 2 for tag
         tracking = None
-        time.sleep(0.1)
-        globalVars['tag1'] = MegaCom.readTag(globalVars['megaSer'], 1)
-        time.sleep(0.1) #attempting to read tags too quickly causes
-                        #errors in communicating with mega
-        globalVars['tag2'] = MegaCom.readTag(globalVars['megaSer'], 2)
-        globalVars['read1'] = MegaCom.isTag(globalVars['tag1'])
-        globalVars['read2'] = MegaCom.isTag(globalVars['tag2'])
         tag1 = MegaCom.readTag(1)
         time.sleep(0.1) #attempting to read tags too quickly causes
                         #errors in communicating with mega
