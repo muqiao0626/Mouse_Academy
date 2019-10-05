@@ -1,6 +1,6 @@
 /*
  * 
- * BiteLogger 06/15/19
+ * BiteLogger 08/22/19
   SD card datalogger
 
  This example shows how to log data from three analog sensors
@@ -30,7 +30,9 @@ const int numTimeBytes = 13;
 const char beginLogMsg[14] = "begin logging";
 const char endLogMsg[12] = "end logging";
 
-long previousMicros = 0;
+unsigned long previousMicros;
+unsigned long currentMicros;
+unsigned long stamp;
 int fileTag = 0;
 long interval = 500; //Microseconds
 char zeroTime[14] = "0000000000000";
@@ -73,16 +75,18 @@ void loop() {
   if (Serial.available() >= 2) {
     char commandRead = Serial.read();
     //CHECKING FOR LOG COMMAND
-    if (commandRead != '5') {
+    if (commandRead != '4') {
       commandRead = 0;
     }
     else{
       char idRead = Serial.read();
+      //nonsense byte
       if (idRead != '1') {
         idRead = 0;
       }
+      //LOG COMMAND RECEIVED
         else{
-        
+        //find time stamp when arduino reads begin log command
         previousMicros = micros();
         int byteCount = 0;
         while (byteCount < numTimeBytes){
@@ -113,14 +117,19 @@ void loop() {
         logging = true;
         //print message
         Serial.println(beginLogMsg);
+
+        //open data file, write timestamp (from Raspberry Pi)
         File dataFile = SD.open(fileName, FILE_WRITE);
         dataFile.println(timeChar);
 
         while (logging==true) {
-          unsigned long currentMicros = micros();
-          unsigned long stamp = (unsigned long)(currentMicros - previousMicros);
+          currentMicros = micros();
+          stamp = (unsigned long)(currentMicros - previousMicros);
+          //if actual sampling rate slower than desired sampling
+          //rate, write sample immediately
           if (stamp >= interval){
             previousMicros = currentMicros;
+            
             // make a string for assembling the data to log:
             String dataString = String(stamp);
             dataString += ",";
@@ -146,31 +155,47 @@ void loop() {
             }
 
         }
+        //if actual sampling rate faster than desired sampling
+        //rate, delay
+        else{
+          unsigned long delayMicros = interval - stamp;
+          delayMicroseconds(delayMicros);
+        }
         
           //Check for end msg
           if (Serial.available() >= 2) {
-    commandRead = Serial.read();
-    //CHECKING FOR LOG COMMAND
-    if (commandRead != '5') {
-      commandRead = 0;
-    }
-    else{
-      char idRead = Serial.read();
-      if (idRead != '0') {
-        idRead = 1;
-      }
-        else{
-                logging = false;
-              dataFile.close();
-                Serial.println(endLogMsg);
+            commandRead = Serial.read();
+            //CHECKING FOR LOG COMMAND
+              if (commandRead != '4') {
                 commandRead = 0;
-                idRead = 0;
               }
+          else{
+            char idRead = Serial.read();
+            if (idRead != '0') {
+              idRead = 1;
+            }
+            else{
+              logging = false;
+              //read end timestamp
+              int byteCount = 0;
+              while (byteCount < numTimeBytes){
+                char readByte = Serial.read();
+                if (isDigit(readByte)){
+                  timeChar[byteCount] = readByte;
+                  byteCount += 1;
+                }
+              }
+              dataFile.println(timeChar);
+              dataFile.close();
+              Serial.println(endLogMsg);
+              commandRead = 0;
+              idRead = 0;
             }
           }
+        }
       }
     }
   }
 }
-    delay(10);
+    delayMicroseconds(10);
 }

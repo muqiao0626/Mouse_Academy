@@ -1,6 +1,6 @@
 '''
 6/22/19
-Copyright (C) 2018 Meister Lab at Caltech 
+Copyright (C) 2018 Meister Lab at Caltech
 -----------------------------------------------------
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ class MegaObject(object):
         if self.megaPortName == None:
             self.megaPortName = AcademyUtils.findMegaPort()
         self.megaSer = self.getMegaSer()
-        
+
         if self.unoPortName == None:
             self.unoPortName = AcademyUtils.findUnoPort()
         self.unoSer = self.getUnoSer()
@@ -63,7 +63,7 @@ class MegaObject(object):
             readyMsg = self.megaSer.readline().decode().strip()
         except Exception as e:
             self.megaSer = None
-    
+
         return self.megaSer
 
     def getUnoSer(self, unoPort=None):
@@ -79,7 +79,7 @@ class MegaObject(object):
                 self.unoPortName = AcademyUtils.findUnoPort()
                 self.unoSer = serial.Serial(self.unoPortName, 9600, timeout=1)
         time.sleep(0.05)
-    
+
         return self.unoSer
 
     def resetMega(self, megaSer=None):
@@ -96,9 +96,9 @@ class MegaObject(object):
         startTime = time.time()
         startTimeObj = datetime.fromtimestamp(startTime)
         compTime = int(1000*startTime)
-        unoSer.write('51'.encode())
+        unoSer.write('41'.encode())
         unoSer.write(str(compTime).encode())
-    
+
         beginMsg = False
         for check in range(3):
             time.sleep(0.05)
@@ -116,14 +116,18 @@ class MegaObject(object):
         if not beginMsg:
             self.isLogging = False
             raise ReadError('Did not receive message indicating logging begun:\n%s' %msgstr)
-    
+
     #write two-byte code for reading tag from RFID reader serial input
     def endLogging(self, unoSer=None):
         if unoSer==None:
             unoSer = self.unoSer
-        commandStr = '50'
+        endTime = time.time()
+        endTimeObj = datetime.fromtimestamp(endTime)
+        compTime = int(1000*endTime)
+        commandStr = '40'
         unoSer.write(commandStr.encode())
-    
+        unoSer.write(str(compTime).encode())
+
         endMsg = False
         for check in range(3):
             time.sleep(0.05)
@@ -141,7 +145,7 @@ class MegaObject(object):
         if not endMsg:
             self.isLogging = False
             raise ReadError('Did not receive message indicating logging ended:\n%s' %msgstr)
-    
+
     #write two-byte code for reading tag from RFID reader serial input
     def readTag(self, readerNum):
         self.megaSer.reset_output_buffer()
@@ -167,7 +171,7 @@ class MegaObject(object):
         time.sleep(0.01)
         tagString = self.megaSer.readline().decode().strip()
         #print(tagString)
-    
+
         if readerNum == 1:
             tag1 = self.searchForTag(tagString)
             self.tag1 = tag1
@@ -209,7 +213,7 @@ class MegaObject(object):
                 tagInBuffer = self.isTag(newTag)
                 if tagInBuffer:
                     buffer = np.append(buffer, newTag)
-            
+
         return buffer
 
     #write two-byte code for operating servo to open door
@@ -229,10 +233,10 @@ class MegaObject(object):
                 self.door2open = True
             else:
                 raise MegaComError('Error: servoNum must be 1 or 2.')
-        
+
     #write two-byte code for checking if mouse at reader 1
     def tag1InRange(self):
-        commandStr = '90' 
+        commandStr = '90'
         self.megaSer.write(commandStr.encode())
         time.sleep(0.005)
         msgstr = self.megaSer.readline().decode()
@@ -240,12 +244,12 @@ class MegaObject(object):
             tir1 = "true" in msgstr.lower()
         except:
             raise MegaComError('tag1InRange failed, message: %s' % msgstr)
-        
+
         return tir1
-    
+
     #write two-byte code for turning lights on
     def turnLightsOn(self):
-        commandStr = '51' 
+        commandStr = '51'
         self.megaSer.write(commandStr.encode())
         time.sleep(0.005)
         msgstr = self.megaSer.readline().decode()
@@ -255,10 +259,10 @@ class MegaObject(object):
             return self.lightsOn
         except:
             raise MegaComError('Lights ON failed, message: %s' % msgstr)
-    
+
     #write two-byte code for turning lights off
     def turnLightsOff(self):
-        commandStr = '52' 
+        commandStr = '52'
         self.megaSer.write(commandStr.encode())
         time.sleep(0.005)
         msgstr = self.megaSer.readline().decode()
@@ -268,7 +272,7 @@ class MegaObject(object):
             return self.lightsOff
         except:
             raise MegaComError('Lights OFF failed, message: %s' % msgstr)
-    
+
     #write two-byte coe for operating servo to close door
     def closeDoor(self, servoNum):
         commandStr = '7%d' % servoNum
@@ -292,7 +296,7 @@ class MegaObject(object):
             else:
                 raise MegaComError('Error: servoNum must be 1 or 2.')
 
-    
+
     def resetMega(self):
         print('Resetting Arduino Mega...')
         self.megaSer.close()
@@ -310,14 +314,14 @@ class MegaObject(object):
         else:
             self.turnLightsOff()
         return self.megaSer
-    
+
     def resetUno(self):
         print('Resetting Arduino Uno...')
         self.unoSer.close()
         self.unoSer = self.getUnoSer()
         self.isLogging = False
         return self
-    
+
     def searchForTag(self, searchString):
         try:
             matchObj = re.search('[0-9A-Fa-f]{12}', searchString)
@@ -328,7 +332,7 @@ class MegaObject(object):
         except (TypeError, AttributeError) as typerr:
             idIn = ''
         return idIn
-   
+
     def isTag(self, tagString, taglen=12):
         if isinstance(tagString, str) and len(tagString)==taglen and tagString!= "000000000000":
             matchObj = re.search('[0-9A-Fa-f]{12}', tagString)
