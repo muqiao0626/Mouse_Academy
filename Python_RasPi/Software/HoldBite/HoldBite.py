@@ -70,7 +70,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     sessionDurationMinutes = 8
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
-    timeoutDur = 0.5
+    timeoutDur = 0
     maxHoldTime = 400
     holdTimes = [ht for ht in range(0, maxHoldTime+1, 20)]
 
