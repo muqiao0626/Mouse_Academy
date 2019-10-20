@@ -90,6 +90,9 @@ class CameraObject(object):
     
         self.lastDuration = (endTimeObj - actualStartTimeObj).total_seconds()
         return actualStartTimeObj, endTimeObj, self.lastDuration
+    def readOutput(self):
+        lines = self.serialObject.readlines(10)
+        print(lines)
 
 ##################################################
 #
@@ -106,6 +109,7 @@ class CameraObject(object):
 ##################################################
     def checkRecording(self):
         lines = self.serialObject.readlines()
+        print(lines)
         if len(lines) <= 0:
             raise OpenMVError('Error: did not receive end of recording message from OpenMV Cam.')
         else:

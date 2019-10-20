@@ -14,7 +14,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 '''
 
-import sensor, image, time, mjpeg, pyb, os, machine
+import sensor, image, time, mjpeg, pyb, os, uos, machine
 import ustruct as struct
 ##############################
 # Initialize camera and connection
@@ -42,12 +42,15 @@ usb_vcp = pyb.USB_VCP()
 usb_vcp.setinterrupt(-1)
 connected = usb_vcp.isconnected()
 if connected:
-    pyb.LED(RED_LED_PIN).on()
-    pyb.delay(100)
-    pyb.LED(RED_LED_PIN).off()
+    pyb.LED(BLUE_LED_PIN).on()
+    pyb.delay(500)
+    pyb.LED(BLUE_LED_PIN).off()
 #print(connected)
 #usb_vcp.send(int(connected))
 nBytes = 13
+compTimeRead = False
+compTimeBuff = bytearray(nBytes)
+clock = time.clock() # Tracks FPS.
 # end of initialization code
 ##############################
 
@@ -55,19 +58,18 @@ while(True):
     ###########################
     # Check serial buffer until
     # a unix time is read.
-    connected = usb_vcp.isconnected()
     # READ unix time from computer
-    compTimeRead = False
-    compTimeBuff = bytearray(nBytes)
-    byteIndex = 0
-    clock = time.clock() # Tracks FPS.
     ###############################
 
     while not compTimeRead:
-        bytesRead = usb_vcp.recv(compTimeBuff, timeout=1)
-        if bytesRead == nBytes:
+        # returns number of bytes read
+        compTimeBuff = usb_vcp.recv(nBytes, timeout=0)
+        bytesRead = len(compTimeBuff)
+        if bytesRead >3: #nBytes:
             compTimeRead = True
+            pyb.LED(RED_LED_PIN).on()
             readTime = pyb.micros()
+        pyb.delay(10)
 
     while compTimeRead:
         ######################################
@@ -78,16 +80,18 @@ while(True):
         compTimePack = struct.unpack(compTimeFmt, compTimeBuff)
         compTimeStr = compTimePack[0].decode()
         compTime = int(compTimeStr)
-        mjpegname = ''.join([compTimeStr, '.mjpeg'])
 
         # Turn on red LED to indicate frame capture.
         #pyb.LED(RED_LED_PIN).on()
 
-        os.mkdir(compTimeStr)
-        f = open(''.join([compTimeStr, '/', compTimeStr, '.txt']), 'w')
+        uos.mkdir(compTimeStr)
+        pyb.delay(100)
+        fname = ''.join([compTimeStr, '/', compTimeStr, '.txt'])
+        f = open(fname, 'w')
         endRead = False
         endReadBuff = bytearray(4)
         recordTime = pyb.micros()
+        i = 0
 
         # Find time elapsed since start signal was read.
         recordLatency = pyb.elapsed_micros(readTime)
@@ -95,8 +99,10 @@ while(True):
             #capture 5 frames before checking for end signal
             for x in range(5):
                 frameStart = pyb.elapsed_micros(recordTime)
-                img = sensor.snapshot()
-                img.save(compTimeStr + "/" + "%06d.jpg" % i)
+                img = sensor.snapshot().compress()
+                imgPath = compTimeStr + "/" + "%06d.jpg" % i
+                img.save(imgPath)
+                i += 1
                 f.write(str(frameStart + recordLatency))
                 f.write('\r\n')
                 pyb.delay(15)
@@ -104,6 +110,7 @@ while(True):
             if endReadBuff==b'stop':
                 endRead = True
         pyb.LED(RED_LED_PIN).off()
+
         vidStart = int(recordLatency*0.001) + compTime
         vidEnd = int(frameStart*0.001) + vidStart
 
