@@ -86,8 +86,9 @@ while(True):
 
         uos.mkdir(compTimeStr)
         pyb.delay(100)
-        fname = ''.join([compTimeStr, '/', compTimeStr, '.txt'])
-        f = open(fname, 'w')
+        fname = compTimeStr + '/' + compTimeStr + '.txt'
+        #fname = ''.join([compTimeStr, '-', compTimeStr, '.txt'])
+        f = open(fname, 'a+')
         endRead = False
         endReadBuff = bytearray(4)
         recordTime = pyb.micros()
@@ -100,7 +101,7 @@ while(True):
             for x in range(5):
                 frameStart = pyb.elapsed_micros(recordTime)
                 img = sensor.snapshot().compress()
-                imgPath = compTimeStr + "/" + "%06d.jpg" % i
+                imgPath = compTimeStr + '/' + '%06d.jpg' % i
                 img.save(imgPath)
                 i += 1
                 f.write(str(frameStart + recordLatency))
