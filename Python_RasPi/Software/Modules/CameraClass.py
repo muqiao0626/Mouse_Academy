@@ -38,6 +38,11 @@ class CameraObject(object):
         time.sleep(2)
         self.isOpen = True
         return self.serialObject
+    
+    def reconnect(self):
+        self.serialObject.open()
+        self.isOpen = self.serialObject.isOpen()
+        return self.serialObject
 
     def disconnect(self):
         self.serialObject.close()
@@ -48,7 +53,7 @@ class CameraObject(object):
         print('Resetting camera serial port %s...' %self.portName)
         if self.isOpen:
             self.disconnect()
-        serObj = self.connect()
+        serObj = self.reconnect()
         return self
 
 
@@ -109,7 +114,7 @@ class CameraObject(object):
                 startEndStr = startEndBytes.decode()
                 [startStr, endStr] = startEndStr.split(', ')
             except Exception as e:
-                raise OpenMVError('Error: unable to parse end of recording message from OpenMV Cam:\n%s' %startEndStr)
+                raise OpenMVError('Error: unable to parse end of recording message from OpenMV Cam:\n%s' %lines)
         
             actualStartTime = int(startStr)
             endTime = int(endStr)
