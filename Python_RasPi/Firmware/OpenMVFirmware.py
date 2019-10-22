@@ -68,7 +68,7 @@ while(True):
         if bytesRead >3: #nBytes:
             compTimeRead = True
             pyb.LED(RED_LED_PIN).on()
-            readTime = pyb.micros()
+            readTime = pyb.millis()
         pyb.delay(10)
 
     while compTimeRead:
@@ -91,15 +91,15 @@ while(True):
         f = open(fname, 'a+')
         endRead = False
         endReadBuff = bytearray(4)
-        recordTime = pyb.micros()
+        recordTime = pyb.millis()
         i = 0
 
         # Find time elapsed since start signal was read.
-        recordLatency = pyb.elapsed_micros(readTime)
+        recordLatency = pyb.elapsed_millis(readTime)
         while not endRead:
             #capture 5 frames before checking for end signal
             for x in range(5):
-                frameStart = pyb.elapsed_micros(recordTime)
+                frameStart = pyb.elapsed_millis(recordTime)
                 img = sensor.snapshot().compress()
                 imgPath = compTimeStr + '/' + '%06d.jpg' % i
                 img.save(imgPath)
