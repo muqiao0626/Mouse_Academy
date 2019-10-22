@@ -38,8 +38,8 @@ def main(argv):
     mouse.load()
     
     bpodPort = AcademyUtils.findBpodUSBPort()
-    myBpod, reportCard = runProtocol(bpodPort, mouse)
-    return myBpod, reportCard
+    myBpod, reportCard, megaObj = runProtocol(bpodPort, mouse)
+    return myBpod, reportCard, megaObj
                 
 def runProtocol(bpodPort, reportCard, megaObj=None):
     # Initializing Bpod
@@ -67,7 +67,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
     rewardAmount = 1
-    sessionDurationMinutes = 8
+    sessionDurationMinutes = 2
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
     timeoutDur = 0
@@ -88,10 +88,10 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         reportCard.save()
     #find hold time
     #(max hold time with performance > minPerformance)
-    minPerformance = 0.6
+    minPerformance = 0.4
     holdTime = 0
     htidx = 0
-    if perfDict[maxHoldTime] > minPerformance:
+    if perfDict[maxHoldTime] >= minPerformance:
         holdTime = maxHoldTime
         reportCard.setCurrentProtocol('HoldBite')
     else:
@@ -109,14 +109,12 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
                 reportCard.save()
                 completedHoldTime = False
     print('Hold Time:', holdTime)
+
     
-    valveTimes = myBpod.getValveTimes(rewardAmount, [1])
-    lickValveTime = valveTimes[0]
-    
-    CenterPort = int(2)
-    CenterPortBin = 2
-    valveTimes = myBpod.getValveTimes(rewardAmount, [CenterPort])
-    centerValveTime = valveTimes[0]
+    LeftPort = int(1)
+    LeftPortBin = 1
+    valveTimes = myBpod.getValveTimes(rewardAmount, [LeftPort])
+    leftValveTime = valveTimes[0]
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Hold Time (s)": holdTime,
                            "Timeout":timeoutDur,
@@ -172,9 +170,9 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
                  'StateChangeConditions', ('Tup','RewardBite'),
                  'OutputActions', ('SoftCode', 2))
         sma.addState('Name', 'RewardBite',
-                     'Timer', centerValveTime,
+                     'Timer', leftValveTime,
                      'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('ValveState', CenterPortBin))
+                     'OutputActions', ('ValveState', LeftPortBin))
         sma.addState('Name', 'EarlyRelease',
                      'Timer', timeoutDur,
                      'StateChangeConditions', ('Tup', 'exit'),
@@ -186,27 +184,33 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
         except Exception as e:
             print(e)
+            print("adjusting session duration...")
             sessionDurationMinutes = 0.01*int(100*(time.time() - startTime)/60)
             myBpod.updateSettings({"Session Duration (min)": sessionDurationMinutes})
-        RawEvents = myBpod.runStateMachine() # Run state machine and return events
-        myBpod.addTrialEvents(RawEvents)
-        elapsed_time = time.time() - startTime
-        #Find reward times to update session water
-        rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardBite')
-        rewarded = rewardTimes[0][0]>0
+        try:
+            RawEvents = myBpod.runStateMachine() # Run state machine and return events
+            myBpod.addTrialEvents(RawEvents)
+            elapsed_time = time.time() - startTime
+            #Find reward times to update session water
+            rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardBite')
+            rewarded = rewardTimes[0][0]>0
 
         
-        #if correct and water rewarded, update water and reset streak
-        if rewarded:
-            numRewards += 1
-            sessionWater += 0.001*rewardAmount
+            #if correct and water rewarded, update water and reset streak
+            if rewarded:
+                numRewards += 1
+                sessionWater += 0.001*rewardAmount
             
 
-        elapsed_time = time.time()-startTime
-        currentTrial = currentTrial+1
+            elapsed_time = time.time()-startTime
+            currentTrial = currentTrial+1
         
-        if sessionWater+waterToday >= maxWater:
-            print('reached maxWater (%d)' % maxWater)
+            if sessionWater+waterToday >= maxWater:
+                print('reached maxWater (%f)' % maxWater)
+                break
+        except Exception as e:
+            print(e)
+            print('Exiting protocol...')
             break
             
     print('Session water:', sessionWater)

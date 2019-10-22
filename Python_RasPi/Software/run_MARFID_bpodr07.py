@@ -286,7 +286,7 @@ def main():
             #the day. If so, continue main while loop
             #If not, break (and exit script)
             for key in reportCards.keys():
-                print(key + ' allowed to train:', reportCards[key].trainingAllowed)
+
                 anyAllowed = False
                 if reportCards[key].trainingAllowed:
                     anyAllowed = True
