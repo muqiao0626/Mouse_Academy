@@ -23,9 +23,14 @@
  */
 
 #include <SPI.h>
+#include <Servo.h>
 #include <SD.h>
 
 const int chipSelect = 8;
+const int servoPin = 12;
+const int trialPin = 11;
+const int away = 15;
+const int near = 4;
 const int numTimeBytes = 13;
 const char beginLogMsg[14] = "begin logging";
 const char endLogMsg[12] = "end logging";
@@ -39,6 +44,8 @@ char zeroTime[14] = "0000000000000";
 char timeChar[14];
 char fileName[10] = "log00.txt";
 
+Servo biteServo;
+
 
 void setTime(char newTime[14]){
   for (int i=0; i<numTimeBytes; i++){
@@ -51,9 +58,12 @@ void clearTime() {
 }
 
 void setup() {
+  pinMode(trialPin, INPUT);
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
   clearTime();
+  biteServo.attach(servoPin, 400, 1000);
+  delay(500);
   while (!Serial) {
     ; // wait for serial port to connect. Needed for native USB port only
   }
@@ -72,6 +82,13 @@ void setup() {
 
 void loop() {
   boolean logging = false;
+  int inTrial = digitalRead(trialPin);
+  if (inTrial>0){
+    biteServo.write(near);
+  }
+  else{
+    biteServo.write(away);
+  }
   if (Serial.available() >= 2) {
     char commandRead = Serial.read();
     //CHECKING FOR LOG COMMAND
