@@ -15,9 +15,9 @@ const int digitalOutPin2 = 2;
 const int away = 40;
 const int near = 25;
 const int servoPin = 12;
-const int trialPin = 1;
+const int trialPin = 13;
 
-float epsilon = 0.002;
+float epsilon = 0.0002;
 bool biting = false;
 bool inTrial = false;
 int bpodOut = 1;
@@ -34,9 +34,10 @@ Servo biteServo;
 // the setup routine runs once when you press reset:
 void setup() {
   // initialize serial communication at 9600 bits per second:
-  Serial.begin(9600);
+  Serial.begin(115200);
   baseline = analogRead(A0);
   pinMode(digitalOutPin2, OUTPUT);
+  pinMode(trialPin, INPUT);
   biteServo.attach(servoPin, 400, 1050);
   delay(500);
 }
@@ -63,21 +64,25 @@ void loop() {
   v = analogRead(A0);
   v0 = (1 - epsilon)*baseline + epsilon*v;
   baseline = v0;
-  thresh = 0.05*baseline;
-  marg = 0.01*baseline;
+  thresh = 0.1*baseline;
+  marg = 0.001*baseline;
   diff = baseline - v;
   if (biting) {
     if (diff < thresh - marg){
       biting = false;
+      digitalWrite(digitalOutPin2, LOW);
     }
   }
   else {
     if (diff > thresh + marg){
       biting = true;
+      digitalWrite(digitalOutPin2, HIGH);
     }
   }
   digOut = biting*1023;
   // print out the value you read:
+  Serial.print(bpodOut);
+  Serial.print(", ");
   Serial.print(v);
   Serial.print(", ");
   Serial.print(digOut);
