@@ -109,14 +109,14 @@ class SoftCodeHandler(object):
             self.biteDur = self.releaseTime - self.biteTime
             print("Released after %02d ms" %int(1000*biteDur))
             
-        elif byte==5: #to show white after early release
+        elif byte==5: #to show white after early release or miss
             self.releaseTime = time.time()
             self.drawWhite()
             self.pg.display.flip()
             completeTime = time.time()
             self.whiteFlip = self.whiteFlip + [completeTime]
             self.biteDur = self.releaseTime - self.biteTime
-            print("Released after %02d ms (early)" %int(1000*biteDur))
+            print("Released after %02d ms (no reward)" %int(1000*biteDur))
         elif byte==6:
             print("Bite bar stuck" )
             
