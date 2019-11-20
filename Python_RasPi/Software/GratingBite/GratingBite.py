@@ -69,7 +69,9 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
     rewardAmount = 4
-    sessionDurationMinutes = .5
+    sessionDurationMinutes = 5
+    responseWindow = 700#in ms
+    responseWindowSecs = 0.001*responseWindow
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
     timeoutDur = 2
@@ -93,7 +95,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     #find hold time
     #(max hold time with performance > minPerformance)
     minPerformance = 0.7
-    delayMax = 0
+    delayMax = 50
     dmidx = 0
     if perfDict[maxDelayTime] >= minPerformance:
         delayMax = maxDelayTime
@@ -103,7 +105,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         while completedMaxDelay:
             try:
                 completedMaxDelay = perfDict[delayMax] > minPerformance
-                if completedHoldTime:
+                if completedMaxDelay:
                     dmidx += 1
                     delayMax = possibleDelayTimes[dmidx]
             except KeyError:
@@ -126,7 +128,6 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     codeDict = {2:0, 3:90}
 
     myBpod.updateSettings({"Reward Amount": rewardAmount,
-                           "Hold Time (s)": holdTime,
                            "Timeout":timeoutDur,
                            "Min Delay":minDelayTime,
                            "Max Delay": delayMax,
@@ -159,25 +160,25 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     angles = []
     startTime = time.time()
     elapsed_time = 0
-    trial = 1
 
     while elapsed_time < sessionDurationMinutes*60:
+        currentTrial += 1
         vptime = 0.001*random.randrange(0, delayMax, 10) # generate random pause time between min and max delays (10 ms step)
         softByte = random.choice(angleCodes)
-        print('Trial:', trial)
+        print('Trial:', currentTrial)
         sma = stateMachine(myBpod)
         sma.addState('Name', 'WaitForBite',
                      'Timer', 0,
                      'StateChangeConditions', (biteEvent, 'VariablePause'),
-                     'OutputActions', ())
+                     'OutputActions', ('SoftCode', 7))
             
         sma.addState('Name', 'VariablePause',
-                     'Timer', delayTime,
+                     'Timer', vptime,
                      'StateChangeConditions', ('Tup', 'Display', releaseEvent, 'EarlyRelease'),
                      'OutputActions', ('SoftCode', 1))
         
         sma.addState('Name', 'EarlyRelease',
-                     'Timer', timeout,
+                     'Timer', timeoutDur,
                      'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ('SoftCode', 5))
         
@@ -196,12 +197,12 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
                  'StateChangeConditions', ('Tup', 'exit'),
                  'OutputActions', ('ValveState', LeftPortBin, 'SoftCode', 4))
         sma.addState('Name', 'Miss',
-                     'Timer', timeout,
+                     'Timer', timeoutDur,
                      'StateChangeConditions', ('Tup', 'exit'),
                      'OutputActions', ('SoftCode', 5))
         
 
-        trial += 1
+        
         try:
             myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
         except Exception as e:
@@ -218,13 +219,15 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             RawEvents.WhiteFlipTime = []
             RawEvents.WhiteFlipTime.append(myBpod.softCodeHandler.whiteFlip)
             RawEvents.Angle = []
-            RawEvents.Angle.append(codeDict[softByte]])
+            RawEvents.Angle.append(codeDict[softByte])
             RawEvents.Delay = []
             RawEvents.Delay.append(vptime)
             myBpod.addTrialEvents(RawEvents)
+            rawEventsDict = myBpod.structToDict(RawEvents)
+            myBpod.softCodeHandler.clearFlipTimes()
             elapsed_time = time.time() - startTime
             #Find reward times to update session water
-            rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'Reward')
+            rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'Reward')
             rewarded = rewardTimes[0][0]>0
         
             #if correct and water rewarded, update water and reset streak
@@ -234,7 +237,6 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             
 
             elapsed_time = time.time()-startTime
-            currentTrial = currentTrial+1
         
             if sessionWater+waterToday >= maxWater:
                 print('reached maxWater (%f)' % maxWater)
@@ -244,13 +246,13 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             print('Exiting protocol...')
 
             break
-
+        
+    myBpod.softCodeHandler.close()
     print('Session water:', sessionWater)
     myBpod.saveSessionData()
 
-    actualTrials = currentTrial
-    performance = numRewards/actualTrials
-    print('%d rewards in %d trials (%.02f)' % (numRewards, actualTrials, performance))
+    performance = numRewards/currentTrial
+    print('%d rewards in %d trials (%.02f)' % (numRewards, currentTrial, performance))
     if currentTrial >=30:
         perfDictStr.update({str(delayMax):performance})
 

@@ -35,7 +35,7 @@ class SoftCodeHandler(object):
         self.screen = self.pg.display.set_mode((self.screenWidth, self.screenHeight), self.pg.NOFRAME)
         self.grayBackground = self.pg.Surface(self.screen.get_size())
         self.grayBackground = self.grayBackground.convert()
-        self.grayBackground.fill((0.5, 0.5, 0.5))
+        self.grayBackground.fill((128, 128, 128))
         self.screen.blit(self.grayBackground,(0,0))
         self.pg.display.flip()
         
@@ -57,10 +57,12 @@ class SoftCodeHandler(object):
         
         self.whiteBackground = self.pg.Surface(self.screen.get_size())
         self.whiteBackground = self.whiteBackground.convert()
-        self.whiteBackground.fill((1, 1, 1))
+        self.whiteBackground.fill((255, 255, 255))
         
         self.imDict = {'horz':self.gratingImHorz,
                        'vert':self.gratingImVert}
+        self.drawGray()
+        self.pg.display.flip()
 
         
     def drawGray(self):
@@ -95,7 +97,7 @@ class SoftCodeHandler(object):
             self.drawGrating('vert')
             self.pg.display.flip()
             completeTime = time.time()
-            self.gratingFlip = self.patchFlip + [completeTime]
+            self.gratingFlip = self.gratingFlip + [completeTime]
             self.gratingAngle = self.gratingAngle + [0]
             displayDelay = completeTime - self.biteTime
             print("Displayed after %02d ms" %int(1000*displayDelay))
@@ -107,7 +109,7 @@ class SoftCodeHandler(object):
             completeTime = time.time()
             self.grayFlip = self.grayFlip + [completeTime]
             self.biteDur = self.releaseTime - self.biteTime
-            print("Released after %02d ms" %int(1000*biteDur))
+            print("Released after %02d ms" %int(1000*self.biteDur))
             
         elif byte==5: #to show white after early release or miss
             self.releaseTime = time.time()
@@ -116,9 +118,14 @@ class SoftCodeHandler(object):
             completeTime = time.time()
             self.whiteFlip = self.whiteFlip + [completeTime]
             self.biteDur = self.releaseTime - self.biteTime
-            print("Released after %02d ms (no reward)" %int(1000*biteDur))
+            print("Released after %02d ms (no reward)" %int(1000*self.biteDur))
         elif byte==6:
             print("Bite bar stuck" )
+        elif byte==7:#to show gray after miss
+            self.drawGray()
+            self.pg.display.flip()
+            completeTime = time.time()
+            self.grayFlip = self.grayFlip + [completeTime]
             
         
     def close(self):
