@@ -20,7 +20,6 @@ const int trialPin = 13;
 float epsilon = 0.0002;
 bool biting = false;
 bool inTrial = false;
-int bpodOut = 1;
 float baseline;
 float v;
 float v0;
@@ -44,28 +43,12 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 void loop() {
-  
-  bpodOut = digitalRead(trialPin);
-  if (bpodOut < 1){
-    if (inTrial == false){
-      biteServo.write(near);
-      delay(100);
-      inTrial = true;
-    }
-  }
-  if (bpodOut > 0) {
-    if (inTrial == true){
-      biteServo.write(away);
-      delay(100);
-      inTrial = false;
-    }
-  }
   // read the input on analog pin 0:
   v = analogRead(A0);
   v0 = (1 - epsilon)*baseline + epsilon*v;
   baseline = v0;
-  thresh = 0.1*baseline;
-  marg = 0.001*baseline;
+  thresh = 0.1*baseline; //determines how easy to depress
+  marg = 0.001*baseline; //determines how easy the state change for square wave
   diff = baseline - v;
   if (biting) {
     if (diff < thresh - marg){
@@ -81,14 +64,12 @@ void loop() {
   }
   digOut = biting*1023;
   // print out the value you read:
-  Serial.print(bpodOut);
-  Serial.print(", ");
   Serial.print(v);
   Serial.print(", ");
   Serial.print(digOut);
   Serial.print(", ");
   Serial.print(baseline);
   Serial.print(", ");
-  Serial.println(thresh+marg);
+  Serial.println(baseline - (thresh+marg));
   delayMicroseconds(500);        // delay in between reads for stability
 }
