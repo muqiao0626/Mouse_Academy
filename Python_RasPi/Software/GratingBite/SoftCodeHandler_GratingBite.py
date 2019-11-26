@@ -30,8 +30,8 @@ class SoftCodeHandler(object):
         self.gratingAngle = []
         self.pg = importlib.import_module('pygame')
         self.pg.init()
-        self.screenWidth = 1920
-        self.screenHeight = 1080
+        self.screenWidth = 1440
+        self.screenHeight = 900
         self.screen = self.pg.display.set_mode((self.screenWidth, self.screenHeight), self.pg.NOFRAME)
         self.grayBackground = self.pg.Surface(self.screen.get_size())
         self.grayBackground = self.grayBackground.convert()
@@ -41,13 +41,13 @@ class SoftCodeHandler(object):
         
         #horizontal grating
         self.screenRect = self.pg.Rect((0,0),(self.screenWidth, self.screenHeight))
-        self.gratingImHorz = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+90degrees_period=05_size=15_xoffset=+000_yoffset=+000.jpg")
+        self.gratingImHorz = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+90degrees_period=05_size=15_xoffset=+000_yoffset=+000_contrast=100.jpg")
         self.gratingImHorz = self.pg.transform.scale(self.gratingImHorz, self.screenRect.size)
         self.gratingImHorz = self.gratingImHorz.convert()
         
         #verticalGrating
 
-        self.gratingImVert = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+00degrees_period=05_size=15_xoffset=+000_yoffset=+000.jpg")
+        self.gratingImVert = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+00degrees_period=05_size=15_xoffset=+000_yoffset=+000_contrast=100.jpg")
         self.gratingImVert = self.pg.transform.scale(self.gratingImVert, self.screenRect.size)
         self.gratingImVert = self.gratingImVert.convert()
         
@@ -90,6 +90,8 @@ class SoftCodeHandler(object):
             self.gratingFlip = self.gratingFlip + [completeTime]
             self.gratingAngle = self.gratingAngle + [90]
             displayDelay = completeTime - self.biteTime
+            #flipDelay = completeTime - self.gratingTime
+            #print("Flip delay: %02d ms" %int(1000*flipDelay))
             print("Displayed after %02d ms" %int(1000*displayDelay))
             
         elif byte==3: #to show grating after bite
@@ -100,6 +102,8 @@ class SoftCodeHandler(object):
             self.gratingFlip = self.gratingFlip + [completeTime]
             self.gratingAngle = self.gratingAngle + [0]
             displayDelay = completeTime - self.biteTime
+            #flipDelay = completeTime - self.gratingTime
+            #print("Flip delay: %02d ms" %int(1000*flipDelay))
             print("Displayed after %02d ms" %int(1000*displayDelay))
             
         elif byte==4: #to show gray after release

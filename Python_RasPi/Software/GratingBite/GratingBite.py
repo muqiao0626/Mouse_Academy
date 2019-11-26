@@ -68,17 +68,17 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    rewardAmount = 4
-    sessionDurationMinutes = 5
-    responseWindow = 700#in ms
+    rewardAmount = 1
+    sessionDurationMinutes = 10
+    responseWindow = 500#in ms
     responseWindowSecs = 0.001*responseWindow
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
-    timeoutDur = 2
+    timeoutDur = 0.5
     maxDelayTime = 1200
-    minDelayTime = 20
+    minDelayTime = 50
     gratingSize = 15
-    possibleDelayTimes = [pd for pd in range(0, maxDelayTime+1, 20)]
+    possibleDelayTimes = [pd for pd in range(minDelayTime, maxDelayTime+1, 50)]
 
     if 'GratingBite' in reportCard.performance.keys():
         perfDictStr = reportCard.performance['GratingBite']
@@ -127,6 +127,12 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     angleCodes = [2, 3]
     codeDict = {2:0, 3:90}
 
+    currentTrial = 0
+    exitPauseTime = 1
+    flipDelay = 0.012
+    senseDelay = 0.05
+    rewardDelay = flipDelay + senseDelay
+
     myBpod.updateSettings({"Reward Amount": rewardAmount,
                            "Timeout":timeoutDur,
                            "Min Delay":minDelayTime,
@@ -136,11 +142,9 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
                            "Grating Angles": gratingAngles,
                            "Session Duration (min)": sessionDurationMinutes,
                            "Bite Event": biteEvent,
+                           "Flip Delay": flipDelay,
+                           "Sense Delay": senseDelay,
                            "Release Event": releaseEvent})
-
-    currentTrial = 0
-    exitPauseTime = 1
-    flipDelay = 0.121
 
     sessionWater = 0
     maxWater = reportCard.maxWater
@@ -165,12 +169,18 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         currentTrial += 1
         vptime = 0.001*random.randrange(0, delayMax, 10) # generate random pause time between min and max delays (10 ms step)
         softByte = random.choice(angleCodes)
-        print('Trial:', currentTrial)
+        print("Trial: %d;" % currentTrial, "PauseTime:", int(1000*vptime))
         sma = stateMachine(myBpod)
         sma.addState('Name', 'WaitForBite',
-                     'Timer', 0,
-                     'StateChangeConditions', (biteEvent, 'VariablePause'),
+                     'Timer', 300,
+                     'StateChangeConditions', (biteEvent, 'VariablePause', 'Tup', 'Idle'),
                      'OutputActions', ('SoftCode', 7))
+            
+
+        sma.addState('Name', 'Idle',
+                     'Timer', 1,
+                     'StateChangeConditions', ('Tup', 'exit'),
+                     'OutputActions', ())
             
         sma.addState('Name', 'VariablePause',
                      'Timer', vptime,
@@ -183,7 +193,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
                      'OutputActions', ('SoftCode', 5))
         
         sma.addState('Name', 'Display',
-                     'Timer', flipDelay,
+                     'Timer', rewardDelay,
                      'StateChangeConditions', (releaseEvent, 'EarlyRelease', 'Tup', 'WaitForRelease'),
                      'OutputActions', ('SoftCode', softByte))
         
