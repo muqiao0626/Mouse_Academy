@@ -1,5 +1,5 @@
 '''
-08/28/19
+10/22/19
 Copyright (C) 2018 Meister Lab at Caltech
 -----------------------------------------------------
 This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ RED_LED_PIN = 1
 BLUE_LED_PIN = 3
 sensor.set_pixformat(sensor.GRAYSCALE) # or sensor.GRAYSCALE
 sensor.set_framesize(sensor.VGA) # or sensor.QQVGA (or others)
-sensor.set_windowing((320, 0, 160, 120))
+sensor.set_windowing((320, 50, 160, 120))
 
 sensor.set_auto_gain(False)
 sensor.set_auto_whitebal(False)
@@ -112,8 +112,8 @@ while(True):
                 endRead = True
         pyb.LED(RED_LED_PIN).off()
 
-        vidStart = int(recordLatency*0.001) + compTime
-        vidEnd = int(frameStart*0.001) + vidStart
+        vidStart = recordLatency*0.001 + compTime
+        vidEnd = frameStart*0.001 + vidStart
 
         f.close()
         vidStartStr ='{:013d}'.format(int(vidStart))
