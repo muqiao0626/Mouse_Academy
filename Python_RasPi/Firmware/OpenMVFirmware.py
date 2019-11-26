@@ -25,7 +25,7 @@ RED_LED_PIN = 1
 BLUE_LED_PIN = 3
 sensor.set_pixformat(sensor.GRAYSCALE) # or sensor.GRAYSCALE
 sensor.set_framesize(sensor.VGA) # or sensor.QQVGA (or others)
-sensor.set_windowing((320, 0, 160, 120))
+sensor.set_windowing((320, 50, 160, 120))
 
 sensor.set_auto_gain(False)
 sensor.set_auto_whitebal(False)
