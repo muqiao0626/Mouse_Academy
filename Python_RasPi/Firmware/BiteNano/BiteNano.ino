@@ -1,5 +1,5 @@
 /*
-  AnalogReadSerial
+  11/08/19
 
   Reads an analog input on pin 0, prints the result to the Serial Monitor.
   Graphical representation is available using Serial Plotter (Tools > Serial Plotter menu).
