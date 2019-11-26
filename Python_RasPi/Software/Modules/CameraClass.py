@@ -20,6 +20,7 @@ class CameraObject(object):
         self.startTimeObj = None
         self.endTimeObj = None
         self.isOpen = False
+        self.isRecording = False
         
         if connect:
             self.serialObject = self.connect()
@@ -79,6 +80,9 @@ class CameraObject(object):
         except Exception as e:
             self.isRecording = False
             print('Start recording failed:')
+            self.portName = None
+            self.connected = False
+            self.isOpen = False
             raise(OpenMVError(e))
         return startTimeObj
 
@@ -108,8 +112,14 @@ class CameraObject(object):
 #
 ##################################################
     def checkRecording(self):
-        lines = self.serialObject.readlines()
-        print(lines)
+        try:
+            lines = self.serialObject.readlines()
+        except Exception as e:
+            print('Stop recording failed:')
+            self.portName = None
+            self.connected = False
+            self.isOpen = False
+            raise(OpenMVError(e))
         if len(lines) <= 0:
             raise OpenMVError('Error: did not receive end of recording message from OpenMV Cam.')
         else:

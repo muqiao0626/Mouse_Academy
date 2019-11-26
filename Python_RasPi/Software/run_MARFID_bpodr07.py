@@ -202,9 +202,11 @@ def main():
                     print('%s beginning protocol "%s"' %(tracking, protocol))
                     try:
                         if 'Bite' in protocol:
-                            myBpod, reportCards[tracking], MegaCom = protocolModule.runProtocol(bpodPort, reportCards[tracking], megaObj=MegaCom)
+                            myBpod, reportCardUpdated, MegaCom = protocolModule.runProtocol(bpodPort, reportCards[tracking], megaObj=MegaCom)
+                        
                         else:
-                            myBpod, reportCards[tracking] = protocolModule.runProtocol(bpodPort, reportCards[tracking])
+                            myBpod, reportCardUpdated = protocolModule.runProtocol(bpodPort, reportCards[tracking])
+                        reportCards.update({tracking:reportCardUpdated})
                     except Exception as e:
                         print(e)
                         try:
@@ -284,6 +286,8 @@ def main():
             #the day. If so, continue main while loop
             #If not, break (and exit script)
             for key in reportCards.keys():
+
+                anyAllowed = False
                 if reportCards[key].trainingAllowed:
                     anyAllowed = True
                     break

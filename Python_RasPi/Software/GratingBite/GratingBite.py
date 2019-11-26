@@ -58,7 +58,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     else:
         passedMegaObj = True
     myBpod = BpodObject(bpodPort)
-    myBpod.set_protocol('HoldBite')
+    myBpod.set_protocol('GratingBite')
     import numpy as np
 
     d = datetime.date.today()
@@ -68,65 +68,79 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    rewardAmount = 1
-    sessionDurationMinutes = 2
+    rewardAmount = 4
+    sessionDurationMinutes = 5
+    responseWindow = 700#in ms
+    responseWindowSecs = 0.001*responseWindow
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
-    timeoutDur = 0
-    maxHoldTime = 400
-    holdTimes = [ht for ht in range(0, maxHoldTime+1, 20)]
+    timeoutDur = 2
+    maxDelayTime = 1200
+    minDelayTime = 20
+    gratingSize = 15
+    possibleDelayTimes = [pd for pd in range(0, maxDelayTime+1, 20)]
 
-    if 'HoldBite' in reportCard.performance.keys():
-        perfDictStr = reportCard.performance['HoldBite']
+    if 'GratingBite' in reportCard.performance.keys():
+        perfDictStr = reportCard.performance['GratingBite']
         perfDict = {}
-        for htstr in list(perfDictStr.keys()):
-            htint = int(htstr)
-            perfDict[htint] = perfDictStr[htstr]
+        for pdstr in list(perfDictStr.keys()):
+            pdint = int(pdstr)
+            perfDict[pdint] = perfDictStr[pdstr]
     else:
-        reportCard.performance.update({'HoldBite':{}})
-        perfDict = {ms:0 for ms in holdTimes}
-        perfDictStr = {str(ms):0 for ms in holdTimes}
-        reportCard.performance['HoldBite'].update(perfDictStr)
+        reportCard.performance.update({'GratingBite':{}})
+        perfDict = {ms:0 for ms in possibleDelayTimes}
+        perfDictStr = {str(ms):0 for ms in possibleDelayTimes}
+        reportCard.performance['GratingBite'].update(perfDictStr)
         reportCard.save()
     #find hold time
     #(max hold time with performance > minPerformance)
-    minPerformance = 0.4
-    holdTime = 0
-    htidx = 0
-    if perfDict[maxHoldTime] >= minPerformance:
-        holdTime = maxHoldTime
-        reportCard.setCurrentProtocol('HoldBite')
+    minPerformance = 0.7
+    delayMax = 50
+    dmidx = 0
+    if perfDict[maxDelayTime] >= minPerformance:
+        delayMax = maxDelayTime
+        reportCard.setCurrentProtocol('GratingBite')
     else:
-        completedHoldTime = True
-        while completedHoldTime:
+        completedMaxDelay = True
+        while completedMaxDelay:
             try:
-                completedHoldTime = perfDict[holdTime] > minPerformance
-                if completedHoldTime:
-                    htidx += 1
-                    holdTime = holdTimes[htidx]
+                completedMaxDelay = perfDict[delayMax] > minPerformance
+                if completedMaxDelay:
+                    dmidx += 1
+                    delayMax = possibleDelayTimes[dmidx]
             except KeyError:
-                perfDict.update({holdTime:0})
-                perfDictStr.update({str(holdTime):0})
-                reportCard.performance['HoldBite'].update(perfDictStr)
+                perfDict.update({delayMax:0})
+                perfDictStr.update({str(delayMax):0})
+                reportCard.performance['GratingBite'].update(perfDictStr)
                 reportCard.save()
-                completedHoldTime = False
-    print('Hold Time:', holdTime)
+                completedMaxDelay = False
+    print('Max Delay:', delayMax)
+    print("RewardAmount: %s ul" % rewardAmount)
 
     
     LeftPort = int(1)
     LeftPortBin = 1
     valveTimes = myBpod.getValveTimes(rewardAmount, [LeftPort])
     leftValveTime = valveTimes[0]
+    
+    gratingAngles = [0, 90]
+    angleCodes = [2, 3]
+    codeDict = {2:0, 3:90}
 
     myBpod.updateSettings({"Reward Amount": rewardAmount,
-                           "Hold Time (s)": holdTime,
                            "Timeout":timeoutDur,
+                           "Min Delay":minDelayTime,
+                           "Max Delay": delayMax,
+                           "Grating Size": gratingSize,
+                           "Response Window": responseWindow,
+                           "Grating Angles": gratingAngles,
                            "Session Duration (min)": sessionDurationMinutes,
                            "Bite Event": biteEvent,
                            "Release Event": releaseEvent})
 
     currentTrial = 0
     exitPauseTime = 1
+    flipDelay = 0.121
 
     sessionWater = 0
     maxWater = reportCard.maxWater
@@ -143,46 +157,52 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             megaObj.beginLogging()
         except Exception as e2:
             print(e2)
-
+    angles = []
     startTime = time.time()
     elapsed_time = 0
-    trial = 1
 
     while elapsed_time < sessionDurationMinutes*60:
-        print('Trial:', trial)
+        currentTrial += 1
+        vptime = 0.001*random.randrange(0, delayMax, 10) # generate random pause time between min and max delays (10 ms step)
+        softByte = random.choice(angleCodes)
+        print('Trial:', currentTrial)
         sma = stateMachine(myBpod)
         sma.addState('Name', 'WaitForBite',
                      'Timer', 0,
-                     'StateChangeConditions', (biteEvent, 'Bitten'),
-                     'OutputActions', ())
-
-        sma.addState('Name', 'Bitten',
-                 'Timer', 0.001*holdTime,
-                 'StateChangeConditions', (releaseEvent, 'EarlyRelease', 'Tup', 'WaitForRelease'),
-                 'OutputActions', ('SoftCode', 1))
-        sma.addState('Name', 'WaitForRelease',
-                     'Timer', 5,
-                     'StateChangeConditions', (releaseEvent, 'Released', 'Tup', 'Stuck'),
-                     'OutputActions', ())
-        sma.addState('Name', 'Stuck',
-                     'Timer', 0.01,
-                     'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 4))
-        sma.addState('Name', 'Released',
-                 'Timer', 0,
-                 'StateChangeConditions', ('Tup','RewardBite'),
-                 'OutputActions', ('SoftCode', 2))
-        sma.addState('Name', 'RewardBite',
-                     'Timer', leftValveTime,
-                     'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('ValveState', LeftPortBin))
+                     'StateChangeConditions', (biteEvent, 'VariablePause'),
+                     'OutputActions', ('SoftCode', 7))
+            
+        sma.addState('Name', 'VariablePause',
+                     'Timer', vptime,
+                     'StateChangeConditions', ('Tup', 'Display', releaseEvent, 'EarlyRelease'),
+                     'OutputActions', ('SoftCode', 1))
+        
         sma.addState('Name', 'EarlyRelease',
                      'Timer', timeoutDur,
                      'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 3))
+                     'OutputActions', ('SoftCode', 5))
+        
+        sma.addState('Name', 'Display',
+                     'Timer', flipDelay,
+                     'StateChangeConditions', (releaseEvent, 'EarlyRelease', 'Tup', 'WaitForRelease'),
+                     'OutputActions', ('SoftCode', softByte))
+        
+        sma.addState('Name', 'WaitForRelease',
+                     'Timer', responseWindowSecs,
+                     'StateChangeConditions', (releaseEvent, 'Reward', 'Tup', 'Miss'),
+                     'OutputActions', ())
 
+        sma.addState('Name', 'Reward',
+                 'Timer', leftValveTime,
+                 'StateChangeConditions', ('Tup', 'exit'),
+                 'OutputActions', ('ValveState', LeftPortBin, 'SoftCode', 4))
+        sma.addState('Name', 'Miss',
+                     'Timer', timeoutDur,
+                     'StateChangeConditions', ('Tup', 'exit'),
+                     'OutputActions', ('SoftCode', 5))
+        
 
-        trial += 1
+        
         try:
             myBpod.sendStateMachine(sma) # Send state machine description to Bpod device
         except Exception as e:
@@ -192,13 +212,23 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             myBpod.updateSettings({"Session Duration (min)": sessionDurationMinutes})
         try:
             RawEvents = myBpod.runStateMachine() # Run state machine and return events
+            RawEvents.GratingFlipTime = []
+            RawEvents.GratingFlipTime.append(myBpod.softCodeHandler.gratingFlip)
+            RawEvents.GrayFlipTime = []
+            RawEvents.GrayFlipTime.append(myBpod.softCodeHandler.grayFlip)
+            RawEvents.WhiteFlipTime = []
+            RawEvents.WhiteFlipTime.append(myBpod.softCodeHandler.whiteFlip)
+            RawEvents.Angle = []
+            RawEvents.Angle.append(codeDict[softByte])
+            RawEvents.Delay = []
+            RawEvents.Delay.append(vptime)
             myBpod.addTrialEvents(RawEvents)
+            rawEventsDict = myBpod.structToDict(RawEvents)
+            myBpod.softCodeHandler.clearFlipTimes()
             elapsed_time = time.time() - startTime
             #Find reward times to update session water
-            rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardBite')
+            rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial-1].States, 'Reward')
             rewarded = rewardTimes[0][0]>0
-
-<<<<<<< HEAD
         
             #if correct and water rewarded, update water and reset streak
             if rewarded:
@@ -207,7 +237,6 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             
 
             elapsed_time = time.time()-startTime
-            currentTrial = currentTrial+1
         
             if sessionWater+waterToday >= maxWater:
                 print('reached maxWater (%f)' % maxWater)
@@ -217,17 +246,17 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             print('Exiting protocol...')
 
             break
-
+        
+    myBpod.softCodeHandler.close()
     print('Session water:', sessionWater)
     myBpod.saveSessionData()
 
-    actualTrials = currentTrial
-    performance = numRewards/actualTrials
-    print('%d rewards in %d trials (%.02f)' % (numRewards, actualTrials, performance))
+    performance = numRewards/currentTrial
+    print('%d rewards in %d trials (%.02f)' % (numRewards, currentTrial, performance))
     if currentTrial >=30:
-        perfDictStr.update({str(holdTime):performance})
+        perfDictStr.update({str(delayMax):performance})
 
-    reportCard.performance['HoldBite'].update(perfDictStr)
+    reportCard.performance['GratingBite'].update(perfDictStr)
     reportCard.drankWater(sessionWater, myBpod.currentDataFile)
     reportCard.save()
     # Disconnect Bpod
