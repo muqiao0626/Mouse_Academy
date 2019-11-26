@@ -112,8 +112,8 @@ while(True):
                 endRead = True
         pyb.LED(RED_LED_PIN).off()
 
-        vidStart = int(recordLatency*0.001) + compTime
-        vidEnd = int(frameStart*0.001) + vidStart
+        vidStart = recordLatency*0.001 + compTime
+        vidEnd = frameStart*0.001 + vidStart
 
         f.close()
         vidStartStr ='{:013d}'.format(int(vidStart))
