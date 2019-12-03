@@ -69,16 +69,16 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
     rewardAmount = 1
-    sessionDurationMinutes = 10
-    responseWindow = 500#in ms
+    sessionDurationMinutes = 8
+    responseWindow = 400#in ms
     responseWindowSecs = 0.001*responseWindow
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
-    timeoutDur = 0.5
+    timeoutDur = 2
     maxDelayTime = 1200
-    minDelayTime = 50
+    minDelayTime = 100
     gratingSize = 15
-    possibleDelayTimes = [pd for pd in range(minDelayTime, maxDelayTime+1, 50)]
+    possibleDelayTimes = [pd for pd in range(minDelayTime, maxDelayTime+1, 100)]
 
     if 'GratingBite' in reportCard.performance.keys():
         perfDictStr = reportCard.performance['GratingBite']
@@ -94,8 +94,8 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         reportCard.save()
     #find hold time
     #(max hold time with performance > minPerformance)
-    minPerformance = 0.7
-    delayMax = 50
+    minPerformance = 0.65
+    delayMax = minDelayTime
     dmidx = 0
     if perfDict[maxDelayTime] >= minPerformance:
         delayMax = maxDelayTime
@@ -124,22 +124,27 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
     leftValveTime = valveTimes[0]
     
     gratingAngles = [0, 90]
-    angleCodes = [2, 3]
-    codeDict = {2:0, 3:90}
+    gratingPositions = ["Center", "Left"]
+    angleCodes = [2, 3, 4, 5]
+    angleCodeDict = {2:0, 3:90, 4:90, 5:90}
+    posCodeDict = {2:"Center", 3:"Center", 4:"Left", 5:"Left"}
 
     currentTrial = 0
     exitPauseTime = 1
     flipDelay = 0.012
     senseDelay = 0.05
     rewardDelay = flipDelay + senseDelay
+    isi = 0.1
 
     myBpod.updateSettings({"Reward Amount": rewardAmount,
+                           "ISI":isi,
                            "Timeout":timeoutDur,
                            "Min Delay":minDelayTime,
                            "Max Delay": delayMax,
                            "Grating Size": gratingSize,
                            "Response Window": responseWindow,
                            "Grating Angles": gratingAngles,
+                           "Grating Positions": gratingPositions,
                            "Session Duration (min)": sessionDurationMinutes,
                            "Bite Event": biteEvent,
                            "Flip Delay": flipDelay,
@@ -174,7 +179,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         sma.addState('Name', 'WaitForBite',
                      'Timer', 300,
                      'StateChangeConditions', (biteEvent, 'VariablePause', 'Tup', 'Idle'),
-                     'OutputActions', ('SoftCode', 7))
+                     'OutputActions', ('SoftCode', 6))
             
 
         sma.addState('Name', 'Idle',
@@ -190,7 +195,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         sma.addState('Name', 'EarlyRelease',
                      'Timer', timeoutDur,
                      'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 5))
+                     'OutputActions', ('SoftCode', 7))
         
         sma.addState('Name', 'Display',
                      'Timer', rewardDelay,
@@ -199,17 +204,22 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         
         sma.addState('Name', 'WaitForRelease',
                      'Timer', responseWindowSecs,
-                     'StateChangeConditions', (releaseEvent, 'Reward', 'Tup', 'Miss'),
+                     'StateChangeConditions', (releaseEvent, 'InterStimulusInterval', 'Tup', 'Miss'),
+                     'OutputActions', ())
+        
+        sma.addState('Name', 'InterStimulusInterval',
+                     'Timer', isi,
+                     'StateChangeConditions', ('Tup', 'Reward'),
                      'OutputActions', ())
 
         sma.addState('Name', 'Reward',
                  'Timer', leftValveTime,
                  'StateChangeConditions', ('Tup', 'exit'),
-                 'OutputActions', ('ValveState', LeftPortBin, 'SoftCode', 4))
+                 'OutputActions', ('ValveState', LeftPortBin))
         sma.addState('Name', 'Miss',
                      'Timer', timeoutDur,
                      'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 5))
+                     'OutputActions', ('SoftCode', 7))
         
 
         
@@ -220,6 +230,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             print("adjusting session duration...")
             sessionDurationMinutes = 0.01*int(100*(time.time() - startTime)/60)
             myBpod.updateSettings({"Session Duration (min)": sessionDurationMinutes})
+            break
         try:
             RawEvents = myBpod.runStateMachine() # Run state machine and return events
             RawEvents.GratingFlipTime = []
@@ -229,7 +240,9 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             RawEvents.WhiteFlipTime = []
             RawEvents.WhiteFlipTime.append(myBpod.softCodeHandler.whiteFlip)
             RawEvents.Angle = []
-            RawEvents.Angle.append(codeDict[softByte])
+            RawEvents.Angle.append(angleCodeDict[softByte])
+            RawEvents.Position = []
+            RawEvents.Position.append(posCodeDict[softByte])
             RawEvents.Delay = []
             RawEvents.Delay.append(vptime)
             myBpod.addTrialEvents(RawEvents)
@@ -256,7 +269,10 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             print('Exiting protocol...')
 
             break
-        
+       
+    myBpod.updateSettings({"Gray Flip Times": myBpod.softCodeHandler.grayFlip,
+                           "Grating Flip Times": myBpod.softCodeHandler.gratingFlip,
+                           "White Flip Times": myBpod.softCodeHandler.whiteFlip})
     myBpod.softCodeHandler.close()
     print('Session water:', sessionWater)
     myBpod.saveSessionData()

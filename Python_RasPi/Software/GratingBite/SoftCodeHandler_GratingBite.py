@@ -24,10 +24,11 @@ class SoftCodeHandler(object):
         self.biteTime = time.time()
         self.releaseTime = time.time()
         
-        self.gratingFlip = []
-        self.grayFlip = []
-        self.whiteFlip = []
-        self.gratingAngle = []
+        self.gratingFlip = None
+        self.grayFlip = None
+        self.whiteFlip = None
+        self.gratingAngle = None
+        self.gratingPos = None
         self.pg = importlib.import_module('pygame')
         self.pg.init()
         self.screenWidth = 1440
@@ -41,15 +42,24 @@ class SoftCodeHandler(object):
         
         #horizontal grating
         self.screenRect = self.pg.Rect((0,0),(self.screenWidth, self.screenHeight))
-        self.gratingImHorz = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+90degrees_period=05_size=15_xoffset=+000_yoffset=+000_contrast=100.jpg")
-        self.gratingImHorz = self.pg.transform.scale(self.gratingImHorz, self.screenRect.size)
-        self.gratingImHorz = self.gratingImHorz.convert()
+        self.gratingImHorzCenter = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+90degrees_period=05_size=15_xoffset=+000_yoffset=+000_contrast=100.jpg")
+        self.gratingImHorzCenter = self.pg.transform.scale(self.gratingImHorzCenter, self.screenRect.size)
+        self.gratingImHorzCenter = self.gratingImHorzCenter.convert()
+        
+        self.screenRect = self.pg.Rect((0,0),(self.screenWidth, self.screenHeight))
+        self.gratingImHorzLeft = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+90degrees_period=05_size=15_xoffset=-500_yoffset=+000_contrast=100.jpg")
+        self.gratingImHorzLeft = self.pg.transform.scale(self.gratingImHorzLeft, self.screenRect.size)
+        self.gratingImHorzLeft = self.gratingImHorzLeft.convert()
         
         #verticalGrating
 
-        self.gratingImVert = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+00degrees_period=05_size=15_xoffset=+000_yoffset=+000_contrast=100.jpg")
-        self.gratingImVert = self.pg.transform.scale(self.gratingImVert, self.screenRect.size)
-        self.gratingImVert = self.gratingImVert.convert()
+        self.gratingImVertCenter = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+00degrees_period=05_size=15_xoffset=+000_yoffset=+000_contrast=100.jpg")
+        self.gratingImVertCenter = self.pg.transform.scale(self.gratingImVertCenter, self.screenRect.size)
+        self.gratingImVertCenter = self.gratingImVertCenter.convert()
+
+        self.gratingImVertLeft = self.pg.image.load("/home/pi/Mouse_Academy/Python_RasPi/Software/GratingBite/gratingIms/grating_rot=+00degrees_period=05_size=15_xoffset=-500_yoffset=+000_contrast=100.jpg")
+        self.gratingImVertLeft = self.pg.transform.scale(self.gratingImVertLeft, self.screenRect.size)
+        self.gratingImVertLeft = self.gratingImVertLeft.convert()
         
         
         #white background
@@ -59,8 +69,10 @@ class SoftCodeHandler(object):
         self.whiteBackground = self.whiteBackground.convert()
         self.whiteBackground.fill((255, 255, 255))
         
-        self.imDict = {'horz':self.gratingImHorz,
-                       'vert':self.gratingImVert}
+        self.imDict = {'horzCenter':self.gratingImHorzCenter,
+                       'vertCenter':self.gratingImVertCenter,
+                       'horzLeft':self.gratingImHorzLeft,
+                       'vertLeft':self.gratingImVertLeft}
         self.drawGray()
         self.pg.display.flip()
 
@@ -84,52 +96,79 @@ class SoftCodeHandler(object):
 
         elif byte==2: #to show grating after bite
             self.gratingTime = time.time()
-            self.drawGrating('horz')
+            self.drawGrating('horzCenter')
             self.pg.display.flip()
             completeTime = time.time()
-            self.gratingFlip = self.gratingFlip + [completeTime]
-            self.gratingAngle = self.gratingAngle + [90]
+            self.gratingFlip = completeTime
+            self.gratingAngle = 90
+            self.gratingPos = "Center"
             displayDelay = completeTime - self.biteTime
             #flipDelay = completeTime - self.gratingTime
             #print("Flip delay: %02d ms" %int(1000*flipDelay))
             print("Displayed after %02d ms" %int(1000*displayDelay))
-            
+
         elif byte==3: #to show grating after bite
             self.gratingTime = time.time()
-            self.drawGrating('vert')
+            self.drawGrating('horzLeft')
             self.pg.display.flip()
             completeTime = time.time()
-            self.gratingFlip = self.gratingFlip + [completeTime]
-            self.gratingAngle = self.gratingAngle + [0]
+            self.gratingFlip = completeTime
+            self.gratingAngle = 90
+            self.gratingPos = "Left"
             displayDelay = completeTime - self.biteTime
             #flipDelay = completeTime - self.gratingTime
             #print("Flip delay: %02d ms" %int(1000*flipDelay))
             print("Displayed after %02d ms" %int(1000*displayDelay))
             
-        elif byte==4: #to show gray after release
+        elif byte==4: #to show grating after bite
+            self.gratingTime = time.time()
+            self.drawGrating('vertCenter')
+            self.pg.display.flip()
+            completeTime = time.time()
+            self.gratingFlip = completeTime
+            self.gratingAngle = 0
+            self.gratingPos = "Center"
+            displayDelay = completeTime - self.biteTime
+            #flipDelay = completeTime - self.gratingTime
+            #print("Flip delay: %02d ms" %int(1000*flipDelay))
+            
+        elif byte==5: #to show grating after bite
+            self.gratingTime = time.time()
+            self.drawGrating('vertLeft')
+            self.pg.display.flip()
+            completeTime = time.time()
+            self.gratingFlip = completeTime
+            self.gratingAngle = 0
+            self.gratingPos = "Left"
+            displayDelay = completeTime - self.biteTime
+            #flipDelay = completeTime - self.gratingTime
+            #print("Flip delay: %02d ms" %int(1000*flipDelay))
+            print("Displayed after %02d ms" %int(1000*displayDelay))
+            
+        elif byte==6: #to show gray after release
             self.releaseTime = time.time()
             self.drawGray()
             self.pg.display.flip()
             completeTime = time.time()
-            self.grayFlip = self.grayFlip + [completeTime]
+            self.grayFlip = completeTime
             self.biteDur = self.releaseTime - self.biteTime
             print("Released after %02d ms" %int(1000*self.biteDur))
             
-        elif byte==5: #to show white after early release or miss
+        elif byte==7: #to show white after early release or miss
             self.releaseTime = time.time()
             self.drawWhite()
             self.pg.display.flip()
             completeTime = time.time()
-            self.whiteFlip = self.whiteFlip + [completeTime]
+            self.whiteFlip = completeTime
             self.biteDur = self.releaseTime - self.biteTime
             print("Released after %02d ms (no reward)" %int(1000*self.biteDur))
-        elif byte==6:
+        elif byte==8:
             print("Bite bar stuck" )
-        elif byte==7:#to show gray after miss
+        elif byte==9:#to show gray after miss
             self.drawGray()
             self.pg.display.flip()
             completeTime = time.time()
-            self.grayFlip = self.grayFlip + [completeTime]
+            self.grayFlip = completeTime
             
         
     def close(self):
