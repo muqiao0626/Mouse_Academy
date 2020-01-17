@@ -47,6 +47,7 @@ class MegaObject(object):
 
         if self.unoPortName == None:
             self.unoPortName = AcademyUtils.findUnoPort()
+            
         self.unoSer = self.getUnoSer()
 
 
@@ -69,7 +70,7 @@ class MegaObject(object):
     def getUnoSer(self, unoPort=None):
         if unoPort is None:
             unoPort = self.unoPortName
-        self.unoSer = serial.Serial(unoPort, 9600, timeout=1)
+        self.unoSer = serial.Serial(unoPort, 9600, timeout=5)
         try:
             initMsg = unoSer.readline().decode().strip()
         except Exception as e:
@@ -115,6 +116,7 @@ class MegaObject(object):
                 break
         if not beginMsg:
             self.isLogging = False
+            print("nextLine:", unoSer.readline())
             raise ReadError('Did not receive message indicating logging begun:\n%s' %msgstr)
 
     #write two-byte code for reading tag from RFID reader serial input

@@ -68,17 +68,17 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    rewardAmount = 1
+    rewardAmount = 2
     sessionDurationMinutes = 8
     responseWindow = 400#in ms
     responseWindowSecs = 0.001*responseWindow
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
-    timeoutDur = 2
+    timeoutDur = 1
     maxDelayTime = 1200
-    minDelayTime = 100
+    minDelayTime = 50
     gratingSize = 15
-    possibleDelayTimes = [pd for pd in range(minDelayTime, maxDelayTime+1, 100)]
+    possibleDelayTimes = [pd for pd in range(minDelayTime, maxDelayTime+1, 50)]
 
     if 'GratingBite' in reportCard.performance.keys():
         perfDictStr = reportCard.performance['GratingBite']

@@ -105,7 +105,6 @@ class ReportCard():
     def drankWater(self, amount, sessionName):
         days = self.getDates()
         today = dt.date.today().isoformat()
-        print(today, days)
         if today not in days:
             self.waterByDay.update({today:0})
         oldAmount = self.waterByDay[today]

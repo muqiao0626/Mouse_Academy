@@ -68,8 +68,8 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
 
     myBpod.set_subject(subject)
     maxWater = reportCard.maxWater
-    rewardAmount = 1
-    sessionDurationMinutes = 2
+    rewardAmount = 4
+    sessionDurationMinutes = .5
     biteEvent = 'Wire1In'
     releaseEvent='Wire1Out'
     timeoutDur = 0
@@ -111,6 +111,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
                 reportCard.save()
                 completedHoldTime = False
     print('Hold Time:', holdTime)
+    print("RewardAmount: %s ul" % rewardAmount)
 
     
     LeftPort = int(1)
@@ -179,7 +180,7 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
         sma.addState('Name', 'EarlyRelease',
                      'Timer', timeoutDur,
                      'StateChangeConditions', ('Tup', 'exit'),
-                     'OutputActions', ('SoftCode', 3))
+                     'OutputActions', ('SoftCode', 3, 'Wire1', 1))
 
 
         trial += 1
@@ -197,8 +198,6 @@ def runProtocol(bpodPort, reportCard, megaObj=None):
             #Find reward times to update session water
             rewardTimes = getattr(myBpod.data.rawEvents.Trial[currentTrial].States, 'RewardBite')
             rewarded = rewardTimes[0][0]>0
-
-<<<<<<< HEAD
         
             #if correct and water rewarded, update water and reset streak
             if rewarded:

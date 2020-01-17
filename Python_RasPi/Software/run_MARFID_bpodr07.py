@@ -297,9 +297,14 @@ def main():
                 try:
                     MegaCom.closeDoor(1)
                     if not systemFailure:
-                        print("All pupils have completed today's training!")
+                        completeTime = time.time()
+                        completeTimeObj = datetime.fromtimestamp(completeTime)
+                        print("%s: All pupils have completed today's training!" %completeTimeObj.strftime('%H:%M:%S'))
         
                 except MegaCom.ServoError as e:
+                    failTime = time.time()
+                    failTimeObj = datetime.fromtimestamp(failTime)
+                    print("%s: System Failure." %failTimeObj.strftime('%H:%M:%S'))
                     print(e)
     
 
