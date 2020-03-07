@@ -1,5 +1,5 @@
 '''
-Copyright (C) 2018 Meister Lab at Caltech 
+Copyright (C) 2018 Meister Lab at Caltech
 -----------------------------------------------------
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@ import traceback
 import serial
 import json
 import time
-from serial.tools.list_ports_linux import comports
+from serial.tools.list_ports import comports
 
 def json_serial(obj):
     import datetime as dt
     if isinstance(obj, (dt.datetime, dt.date)):
         return obj.isoformat()
     raise TypeError ("Type %s not serializable" % type(obj))
-    
+
 #find directories
 def getModulesDir():
     modulesDir = os.path.dirname(os.path.realpath(__file__))
@@ -61,7 +61,7 @@ def getRosterPath():
         emptyRoster = {'id':{}}
         with open(rosterPath, 'w') as f:
             f.write(json.dumps(emptyRoster, sort_keys=True, indent=2, separators=(',', ': '), default=json_serial))
-    
+
     return rosterPath
 
 def getRoster():
@@ -76,7 +76,7 @@ def getSubjectToTag():
     subToTag = {}
     for tag in roster['id']:
         subToTag[roster['id'][tag]['mouseID']] = tag
-        
+
     return subToTag
 
 def getDevices():
@@ -126,9 +126,10 @@ def findBpodUSBPort(devices=None):
     if foundBpodPort:
         return bpodPort
     else:
-        printDevices(devices=devices)
-        raise DeviceError('Arduino Due Native USB Port not found.')
-    
+        return 'COM6'
+        #printDevices(devices=devices)
+        #raise DeviceError('Arduino Due Native USB Port not found.')
+
 def resetBpod(bpodUSBPort=None):
     if bpodUSBPort!=None:
         try:
@@ -140,9 +141,7 @@ def resetBpod(bpodUSBPort=None):
             resetSer = serial.Serial(bpodUSBPort, 9600, timeout=0)
             time.sleep(0.01)
             resetSer.close()
-    return bpodUSBPort
-            
-            
+
     return bpodUSBPort
     ''' software fix for port reset
     myBpod = BpodObject(portName)
@@ -159,7 +158,7 @@ def resetBpod(bpodUSBPort=None):
         myBpod.sendStateMachine(sma)
     myBpod.disconnect()
     '''
-        
+
 def getCamPorts():
     foundCamPort = False
     devices = getDevices()
@@ -173,7 +172,7 @@ def getCamPorts():
         return camPorts
     else:
         raise DeviceError('OpenMV Cam USB COM Port not connected.')
-    
+
 def findBpodProgPort(devices=None):
     foundBpodPort = False
     if devices==None:
@@ -189,7 +188,7 @@ def findBpodProgPort(devices=None):
         return bpodPort
     else:
         raise DeviceError('Arduino Due Programming Port not found.')
-    
+
 def findUnoPort(devices=None):
     foundUnoPort = False
     if devices==None:
@@ -204,7 +203,7 @@ def findUnoPort(devices=None):
         return unoPort
     else:
         raise DeviceError('Arduino Uno Port not found.')
-    
+
 #determine portname for arduino mega because it doesn't
 #have a device name for some reason
 def findMegaPort(devices=None):
@@ -215,7 +214,7 @@ def findMegaPort(devices=None):
     if 'Arduino Mega' in devices.keys():
         megaFound = true
         return devices['Arduino Mega']
-        
+
     for key in devices.keys():
         if 'tty' in key:
             print('Trying port %s...' % devices[key])
@@ -238,7 +237,7 @@ def findMegaPort(devices=None):
                 trySer.close()
     if not megaFound:
         raise DeviceError('Arduino Mega 2560 not found.')
-    
+
     return devices[key]
 
 class DeviceError(Exception):
